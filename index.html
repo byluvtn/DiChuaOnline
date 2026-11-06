@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#160d08" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Niệm Phật" />
+<meta name="description" content="Chùa 3D trên điện thoại – niệm Phật, lần tràng hạt, gõ mõ, tích công đức." />
+<title>Niệm Phật Online</title>
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="stylesheet" href="css/app.css" />
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.164.1/build/three.module.js"
+  }
+}
+</script>
+</head>
+<body>
+
+<canvas id="scene" aria-hidden="true"></canvas>
+
+<div id="ui">
+
+  <header id="topbar">
+    <button class="pill" id="btnBack" aria-label="Quay lại">
+      <svg viewBox="0 0 24 24" class="ic"><path d="M14.5 5 8 12l6.5 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Quay lại
+    </button>
+
+    <div class="title">
+      <b>Chùa Hương Sen</b>
+      <span><i class="dot"></i><em id="onlineCount">12</em> người đang niệm</span>
+    </div>
+
+    <button class="pill icon-only" id="btnSettings" aria-label="Cài đặt">
+      <svg viewBox="0 0 24 24" class="ic"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 3.2v2.2M12 18.6v2.2M4.8 12H2.6M21.4 12h-2.2M6.9 6.9 5.3 5.3M18.7 18.7l-1.6-1.6M6.9 17.1l-1.6 1.6M18.7 5.3l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+  </header>
+
+  <div id="levelChip">
+    <div class="ring"><i id="levelNum">1</i></div>
+    <div class="lvl-text">
+      <b id="meritNum">0</b>
+      <small>công đức</small>
+      <div class="xp"><i id="xpBar"></i></div>
+    </div>
+  </div>
+
+  <nav id="sutraTabs" aria-label="Chọn bài kinh"></nav>
+
+  <section id="prayer">
+    <div id="lines"></div>
+    <div class="progress"><i id="progressBar"></i></div>
+    <div class="meta">
+      <span id="stepInfo">0 / 0</span>
+      <span id="sutraInfo">Chú Đại Bi</span>
+    </div>
+  </section>
+
+  <div id="controls">
+    <button id="btnFish" class="fish" aria-label="Gõ mõ">
+      <svg viewBox="0 0 120 120" aria-hidden="true">
+        <defs>
+          <radialGradient id="wood" cx="35%" cy="28%" r="78%">
+            <stop offset="0%" stop-color="#e0a05a"/>
+            <stop offset="45%" stop-color="#b06e2e"/>
+            <stop offset="100%" stop-color="#5c3315"/>
+          </radialGradient>
+          <radialGradient id="hole" cx="50%" cy="40%" r="60%">
+            <stop offset="0%" stop-color="#3a1f0c"/>
+            <stop offset="100%" stop-color="#20100a"/>
+          </radialGradient>
+        </defs>
+        <ellipse cx="60" cy="62" rx="46" ry="36" fill="url(#wood)"/>
+        <ellipse cx="60" cy="62" rx="46" ry="36" fill="none" stroke="#f2c37a" stroke-opacity=".55" stroke-width="2"/>
+        <ellipse cx="60" cy="52" rx="20" ry="12" fill="url(#hole)"/>
+        <path d="M22 58c14-10 62-10 76 0" fill="none" stroke="#f7d79b" stroke-opacity=".35" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="42" cy="44" r="3" fill="#ffe8bd" opacity=".5"/>
+      </svg>
+      <span class="ripple"></span>
+    </button>
+
+    <div class="toggles">
+      <label class="sw"><input type="checkbox" id="chkVoice" checked /><span></span>Giọng đọc</label>
+      <label class="sw"><input type="checkbox" id="chkAuto" /><span></span>Tự động</label>
+      <label class="sw"><input type="checkbox" id="chkVibe" checked /><span></span>Rung</label>
+      <div class="speed">
+        <small>Nhịp</small>
+        <input type="range" id="rngSpeed" min="1" max="10" step="1" value="5" />
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" role="status"></div>
+
+<div id="sheet" class="hidden">
+  <div class="sheet-card">
+    <h2>Lời nguyện hôm nay</h2>
+    <p class="muted">Cài lên màn hình chính để dùng như app: mở menu trình duyệt → <b>Thêm vào MH chính</b>.</p>
+    <div class="stats">
+      <div><b id="stTotal">0</b><small>Tổng công đức</small></div>
+      <div><b id="stToday">0</b><small>Hôm nay</small></div>
+      <div><b id="stLevel">1</b><small>Cấp</small></div>
+    </div>
+    <label class="row"><span>Giọng đọc kinh</span><input type="checkbox" id="sndVoice" checked /></label>
+    <label class="row"><span>Rung khi gõ mõ</span><input type="checkbox" id="sndVibe" checked /></label>
+    <label class="row"><span>Chuông kết thúc bài</span><input type="checkbox" id="sndBell" checked /></label>
+    <div class="row"><span>Chất lượng 3D</span>
+      <select id="selQuality">
+        <option value="high">Cao</option>
+        <option value="mid" selected>Vừa</option>
+        <option value="low">Thấp (máy yếu)</option>
+      </select>
+    </div>
+    <button class="btn ghost" id="btnReset">Xoá công đức</button>
+    <button class="btn gold" id="btnCloseSheet">Xong</button>
+  </div>
+</div>
+
+<div id="boot">
+  <div class="boot-card">
+    <div class="lotus">
+      <svg viewBox="0 0 120 120">
+        <g class="petals">
+          <path d="M60 20c11 12 16 25 16 37S70 82 60 90c-10-8-16-21-16-33s5-25 16-37z"/>
+          <path d="M60 90C45 90 25 80 17 58c16-2 30 4 40 16"/>
+          <path d="M60 90c15 0 35-10 43-32-16-2-30 4-40 16"/>
+          <path d="M60 90c-9-8-27-22-24-46 11 4 18 12 24 24"/>
+          <path d="M60 90c9-8 27-22 24-46-11 4-18 12-24 24"/>
+        </g>
+        <path class="water" d="M14 100c13 5 26 7 46 7s33-2 46-7" fill="none" stroke="#f0c56a" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <h1>Niệm Phật Online</h1>
+    <p>Lên chùa mọi lúc, mọi nơi</p>
+    <button class="btn gold big" id="btnEnter">Vào chùa</button>
+    <small id="bootMsg">Chạm để bắt đầu · nên đeo tai nghe</small>
+  </div>
+</div>
+
+<noscript><div class="nojs">Cần bật JavaScript để vào chùa.</div></noscript>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

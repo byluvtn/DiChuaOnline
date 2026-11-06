@@ -1,0 +1,32 @@
+{
+  "name": "Niệm Phật Online",
+  "short_name": "Niệm Phật",
+  "description": "Chùa 3D trên điện thoại – niệm Phật, lần tràng hạt, gõ mõ, tích công đức.",
+  "lang": "vi",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#160d08",
+  "theme_color": "#160d08",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
