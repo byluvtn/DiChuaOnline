@@ -7,7 +7,7 @@
  * - Các đại chúng / Phật tử cùng tụng kinh trong Chánh Điện
  */
 
-import * as THREE from 'three';
+import * as THREE from './three.module.js';
 
 let scene, camera, renderer, clock;
 let terrain, groundPlane;
@@ -1003,6 +1003,10 @@ export function setChantingState(chanting) {
   isChanting = !!chanting;
 }
 
+export function setAura(active) {
+  isChanting = !!active;
+}
+
 export function onZoneChange(cb) {
   onZoneChangeCallback = cb;
 }
@@ -1011,9 +1015,12 @@ export function onZoneChange(cb) {
    HỆ THỐNG THẢ ĐÈN NGUYỆN (HOA ĐĂNG HỒ SEN)
    ======================================================== */
 export function spawnLantern(message) {
+  if (!scene) return;
   const g = new THREE.Group();
   // Đèn sen thả từ mép hồ gần nhân vật nhất
-  const startAngle = Math.atan2(player.position.z - 2.5, player.position.x);
+  const px = player ? player.position.x : 0;
+  const pz = player ? player.position.z : 8;
+  const startAngle = Math.atan2(pz - 2.5, px);
   const startX = Math.cos(startAngle) * 3.8;
   const startZ = Math.sin(startAngle) * 3.8 + 2.5;
 
@@ -1178,6 +1185,7 @@ function updateGame(dt) {
 }
 
 function checkPlayerZone() {
+  if (!player) return;
   let detectedZone = null;
   for (const [key, loc] of Object.entries(LOCATIONS)) {
     const dist = Math.hypot(player.position.x - loc.x, player.position.z - loc.z);

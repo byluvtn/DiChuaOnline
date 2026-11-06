@@ -20,7 +20,7 @@
   <script type="importmap">
 {
   "imports": {
-    "three": "https://unpkg.com/three@0.164.1/build/three.module.js"
+    "three": "./js/three.module.js"
   }
 }
 </script>
@@ -222,7 +222,7 @@
           <span class="gold-icon">🪷</span>
           <div>
             <h3>Đèn nguyện</h3>
-            <small>Hơn 100 ngọn đèn đang sáng lung linh trên hồ sen</small>
+            <small id="lanternCount">Hơn 100 ngọn đèn đang sáng lung linh trên hồ sen</small>
           </div>
         </div>
         <button class="btn-close-modal" id="btnCloseLantern">✕</button>
@@ -310,7 +310,9 @@
       <div class="lotus-glow">🪷</div>
       <h1>Chùa Vô Lượng</h1>
       <p class="slogan">Không gian tịnh tâm · Niệm Phật · Thả đèn nguyện 3D</p>
-      <button class="btn-enter" id="btnEnter">Bước Vào Chùa</button>
+      <button class="btn-enter" id="btnEnter"
+        onclick="try{document.getElementById('bootScreen').classList.add('hide');setTimeout(()=>{document.getElementById('bootScreen').style.display='none';},650);}catch(e){}">Bước
+        Vào Chùa</button>
       <small class="headphone-tip">Khuyến khích bật âm lượng hoặc đeo tai nghe để thưởng thức tiếng chuông & nhạc
         thiền</small>
     </div>

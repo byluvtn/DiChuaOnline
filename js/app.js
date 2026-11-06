@@ -1,5 +1,5 @@
 import { SUTRAS, SUTRA_BY_ID, levelOf, syllables } from './kinh.js';
-import { initScene, setAura, teleportTo, setJoystickMove, spawnLantern, LOCATIONS } from './scene.js';
+import { initScene, setAura, teleportTo, setJoystickMove, spawnLantern, LOCATIONS, onZoneChange } from './scene.js';
 import * as Audio from './audio.js';
 import * as Store from './storage.js';
 
@@ -10,17 +10,18 @@ const el = {
   lines: $('lines'),
   progressBar: $('progressBar'),
   stepInfo: $('stepInfo'),
-  sutraInfo: $('sutraInfo'),
+  sutraInfo: $('currentSutraTitle') || $('sutraInfo'),
   tabs: $('sutraTabs'),
   fish: $('btnFish'),
-  meritNum: $('meritNum'),
-  levelNum: $('levelNum'),
+  meritNum: $('topMerit') || $('meritNum'),
+  levelNum: $('topLevelNum') || $('levelNum'),
+  playerTitle: $('lblLevel') || $('playerTitle'),
   xpBar: $('xpBar'),
   toast: $('toast'),
   boot: $('bootScreen'),
   btnEnter: $('btnEnter'),
   sheet: $('settingsSheet'),
-  chkVoice: $('chkVoice'),
+  chkVoice: $('sndVoice') || $('chkVoice'),
   chkAuto: $('chkAuto'),
   chkVibe: $('chkVibe'),
   rngSpeed: $('rngSpeed'),
@@ -35,13 +36,12 @@ const el = {
   onlineCount: $('onlineCount'),
 
   // Các nút & thành phần mới
-  userNameLabel: $('userNameLabel'),
-  playerTitle: $('playerTitle'),
+  userNameLabel: $('topPlayerName') || $('userNameLabel'),
   btnEditName: $('btnEditName'),
   nameModal: $('nameModal'),
-  btnCloseName: $('btnCloseName'),
+  btnCloseName: $('btnCancelName') || $('btnCloseName'),
   btnSaveName: $('btnSaveName'),
-  txtNameInput: $('txtNameInput'),
+  txtNameInput: $('inpPlayerName') || $('txtNameInput'),
 
   btnToggleBgm: $('btnToggleBgm'),
   btnOpenLantern: $('btnOpenLantern'),
@@ -53,19 +53,19 @@ const el = {
 
   quickNav: $('quickNav'),
   zonePrompt: $('zonePrompt'),
-  zoneTitle: $('zoneTitle'),
-  zoneDesc: $('zoneDesc'),
-  btnZoneAction: $('btnZoneAction'),
+  zoneTitle: $('promptTitle') || $('zoneTitle'),
+  zoneDesc: $('promptDesc') || $('zoneDesc'),
+  btnZoneAction: $('promptActionBtn') || $('btnZoneAction'),
 
   lanternModal: $('lanternModal'),
   btnCloseLantern: $('btnCloseLantern'),
   btnSendWish: $('btnSendWish'),
-  txtWishInput: $('txtWishInput'),
-  wishList: $('wishList'),
+  txtWishInput: $('inpWishText') || $('txtWishInput'),
+  wishList: $('wishesList') || $('wishList'),
   lanternCount: $('lanternCount'),
 
   joystickZone: $('joystickZone'),
-  joystickKnob: $('joystickKnob')
+  joystickKnob: $('joystickStick') || $('joystickKnob')
 };
 
 const state = {
@@ -85,9 +85,11 @@ const state = {
 
 function boot() {
   try {
-    initScene(el.canvas, state.data.settings.quality);
+    if (el.canvas) {
+      initScene(el.canvas, state.data.settings.quality);
+    }
   } catch (err) {
-    console.warn('3D không khả dụng:', err);
+    console.warn('3D không khả dụng hoặc lỗi khởi tạo:', err);
   }
 
   buildTabs();
@@ -103,9 +105,13 @@ function boot() {
 
   // Khởi tạo danh sách đèn nguyện ban đầu trên hồ sen
   if (state.data.wishes && state.data.wishes.length > 0) {
-    state.data.wishes.slice(0, 10).forEach((w) => {
-      spawnLantern(w.text);
-    });
+    try {
+      state.data.wishes.slice(0, 10).forEach((w) => {
+        spawnLantern(w.text);
+      });
+    } catch (e) {
+      console.warn('Lỗi tạo đèn:', e);
+    }
   }
 }
 
@@ -115,24 +121,25 @@ function renderPlayerInfo() {
   const name = state.data.playerName || 'Quảng Hạnh 55';
   if (el.userNameLabel) el.userNameLabel.textContent = name;
   const lv = levelOf(state.data.merit);
-  if (el.playerTitle) el.playerTitle.textContent = `Cấp ${lv.level} · ${lv.name}`;
+  if (el.playerTitle) el.playerTitle.textContent = `${lv.level}`;
+  if (el.levelNum) el.levelNum.textContent = `${lv.level}`;
 }
 
 function openNameModal() {
-  el.txtNameInput.value = state.data.playerName || 'Quảng Hạnh 55';
-  el.nameModal.classList.remove('hidden');
-  setTimeout(() => el.txtNameInput.focus(), 100);
+  if (el.txtNameInput) el.txtNameInput.value = state.data.playerName || 'Quảng Hạnh 55';
+  el.nameModal?.classList.remove('hidden');
+  setTimeout(() => el.txtNameInput?.focus(), 100);
 }
 
 function savePlayerName() {
-  const val = el.txtNameInput.value.trim();
+  const val = el.txtNameInput ? el.txtNameInput.value.trim() : '';
   if (val) {
     state.data.playerName = val;
     Store.save(state.data);
     renderPlayerInfo();
     toast(`Pháp danh đổi thành: ${val}`);
   }
-  el.nameModal.classList.add('hidden');
+  el.nameModal?.classList.add('hidden');
 }
 
 /* ================= RENDER CÔNG ĐỨC & CẤP ================= */
@@ -141,6 +148,7 @@ function renderLevel() {
   const lv = levelOf(state.data.merit);
   if (el.meritNum) el.meritNum.textContent = fmt(state.data.merit);
   if (el.levelNum) el.levelNum.textContent = lv.level;
+  if (el.playerTitle) el.playerTitle.textContent = lv.level;
   if (el.xpBar) el.xpBar.style.width = `${lv.pct}%`;
   if (el.stTotal) el.stTotal.textContent = fmt(state.data.merit);
   if (el.stToday) el.stToday.textContent = fmt(state.data.todayMerit);
@@ -149,20 +157,23 @@ function renderLevel() {
 }
 
 function fmt(n) {
-  if (n >= 1000000) return (n / 1000000).toFixed(1).replace('.0', '') + 'M';
-  if (n >= 10000) return (n / 1000).toFixed(1).replace('.0', '') + 'k';
-  return String(n);
+  return Number(n || 0).toLocaleString('vi-VN');
 }
 
 /* ================= SỰ KIỆN GIAO DIỆN CHÍNH ================= */
 
 function bindUI() {
   // Nút Vào Chùa từ boot screen
-  el.btnEnter?.addEventListener('click', enterTemple);
+  const handleEnter = (e) => {
+    e?.preventDefault?.();
+    enterTemple();
+  };
+  el.btnEnter?.addEventListener('click', handleEnter);
+  el.btnEnter?.addEventListener('touchend', handleEnter);
 
   // Đổi Pháp danh
   el.btnEditName?.addEventListener('click', openNameModal);
-  el.btnCloseName?.addEventListener('click', () => el.nameModal.classList.add('hidden'));
+  el.btnCloseName?.addEventListener('click', () => el.nameModal?.classList.add('hidden'));
   el.btnSaveName?.addEventListener('click', savePlayerName);
   el.txtNameInput?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') savePlayerName();
@@ -180,9 +191,16 @@ function bindUI() {
 
   // Nút Bật/Tắt Bảng tụng kinh
   el.btnTogglePrayer?.addEventListener('click', () => {
-    const isHidden = el.prayerSection.classList.toggle('hidden');
-    el.btnTogglePrayer.classList.toggle('highlight', !isHidden);
+    const isHidden = el.prayerSection?.classList.toggle('hidden');
+    el.btnTogglePrayer?.classList.toggle('highlight', !isHidden);
     toast(isHidden ? 'Đã thu gọn bảng tụng kinh' : 'Đã mở bảng tụng kinh');
+  });
+
+  // Nút đóng bảng tụng kinh
+  $('btnClosePrayer')?.addEventListener('click', () => {
+    el.prayerSection?.classList.add('hidden');
+    el.btnTogglePrayer?.classList.remove('highlight');
+    toast('Đã thu gọn bảng tụng kinh');
   });
 
   // Chế độ đọc kinh: Lồng tiếng vs Tự đọc
@@ -191,25 +209,25 @@ function bindUI() {
 
   // Nút Đèn nguyện
   el.btnOpenLantern?.addEventListener('click', openLanternModal);
-  el.btnCloseLantern?.addEventListener('click', () => el.lanternModal.classList.add('hidden'));
+  el.btnCloseLantern?.addEventListener('click', () => el.lanternModal?.classList.add('hidden'));
   el.btnSendWish?.addEventListener('click', submitWish);
   el.txtWishInput?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') submitWish();
   });
 
   // Tabs của modal đèn nguyện
-  document.querySelectorAll('.modal-tab').forEach((tab) => {
+  document.querySelectorAll('.m-tab, .modal-tab').forEach((tab) => {
     tab.addEventListener('click', () => {
-      document.querySelectorAll('.modal-tab').forEach((t) => t.classList.remove('active'));
+      document.querySelectorAll('.m-tab, .modal-tab').forEach((t) => t.classList.remove('active'));
       tab.classList.add('active');
       renderWishList();
     });
   });
 
   // Thanh di chuyển nhanh giữa các Thiền viện (QuickNav)
-  document.querySelectorAll('.nav-pill').forEach((pill) => {
+  document.querySelectorAll('.nav-chip, .nav-pill').forEach((pill) => {
     pill.addEventListener('click', () => {
-      document.querySelectorAll('.nav-pill').forEach((p) => p.classList.remove('active'));
+      document.querySelectorAll('.nav-chip, .nav-pill').forEach((p) => p.classList.remove('active'));
       pill.classList.add('active');
       const locKey = pill.dataset.loc;
       teleportTo(locKey);
@@ -218,10 +236,14 @@ function bindUI() {
     });
   });
 
-  // Zone prompt interaction
-  window.addEventListener('zoneChange', (e) => {
-    handleZoneChange(e.detail.key, e.detail.zone);
-  });
+  // Lắng nghe sự kiện chuyển vùng
+  try {
+    onZoneChange((zone) => {
+      handleZoneChange(zone?.key, zone);
+    });
+  } catch (e) {
+    console.warn('onZoneChange hook error:', e);
+  }
   el.btnZoneAction?.addEventListener('click', handleZoneAction);
 
   // Mõ gõ
@@ -309,16 +331,29 @@ function bindUI() {
 }
 
 async function enterTemple() {
-  Audio.unlockAudio();
-  el.boot.classList.add('hide');
-  setTimeout(() => (el.boot.style.display = 'none'), 650);
+  try {
+    Audio.unlockAudio();
+  } catch (e) {
+    console.warn('Unlock audio:', e);
+  }
+
+  if (el.boot) {
+    el.boot.classList.add('hide');
+    setTimeout(() => {
+      if (el.boot) el.boot.style.display = 'none';
+    }, 650);
+  }
 
   applySettingsToUI();
 
   // Bật nhạc nền nếu cài đặt mở
   if (state.data.settings.bgm) {
-    Audio.startBgm();
-    updateBgmButton(true);
+    try {
+      Audio.startBgm();
+      updateBgmButton(true);
+    } catch (e) {
+      console.warn('BGM start error:', e);
+    }
   }
 
   setVoiceMode(state.data.settings.voiceMode || (state.data.settings.voice ? 'voice' : 'self'));
@@ -332,13 +367,13 @@ async function enterTemple() {
 
 function updateBgmButton(active) {
   if (!el.btnToggleBgm) return;
-  const span = el.btnToggleBgm.querySelector('span');
+  const span = el.btnToggleBgm.querySelector('.btn-text');
   if (active) {
     el.btnToggleBgm.classList.add('active');
-    if (span) span.textContent = 'Nhạc nền: BẬT';
+    if (span) span.textContent = 'Nhạc thiền (Bật)';
   } else {
     el.btnToggleBgm.classList.remove('active');
-    if (span) span.textContent = 'Nhạc nền: TẮT';
+    if (span) span.textContent = 'Nhạc thiền';
   }
 }
 
@@ -373,11 +408,11 @@ function setVoiceMode(mode) {
   Store.save(state.data);
 
   if (isVoice) {
-    toast('Chế độ: Lồng tiếng đọc kinh (Tự động đọc giọng truyền cảm)');
+    toast('Chế độ: Lồng tiếng đọc kinh');
     speakCurrent();
   } else {
     Audio.stopSpeech();
-    toast('Chế độ: Tự đọc kinh (Quý Phật tử tự xướng kinh tâm thành)');
+    toast('Chế độ: Tự đọc kinh');
   }
 }
 
@@ -404,16 +439,16 @@ function handleZoneChange(key, zone) {
   if (el.zonePrompt) el.zonePrompt.classList.remove('hidden');
   if (el.zoneTitle) el.zoneTitle.textContent = zone.name;
 
-  if (key === 'chanhdien') {
+  if (key === 'mainHall' || key === 'chanhdien') {
     if (el.zoneDesc) el.zoneDesc.textContent = 'Điện Phật trang nghiêm, cùng đại chúng quỳ tụng kinh.';
     if (el.btnZoneAction) el.btnZoneAction.textContent = 'Tụng kinh';
-  } else if (key === 'quanam') {
+  } else if (key === 'quanAm' || key === 'quanam') {
     if (el.zoneDesc) el.zoneDesc.textContent = 'Lắng nghe hạnh nguyện từ bi cứu khổ cứu nạn.';
     if (el.btnZoneAction) el.btnZoneAction.textContent = 'Thắp hương';
-  } else if (key === 'thapchuong') {
+  } else if (key === 'bellTower' || key === 'thapchuong') {
     if (el.zoneDesc) el.zoneDesc.textContent = 'Tiếng chuông thanh tịnh xua tan phiền não.';
     if (el.btnZoneAction) el.btnZoneAction.textContent = 'Thỉnh chuông';
-  } else if (key === 'hosen') {
+  } else if (key === 'pond' || key === 'hosen') {
     if (el.zoneDesc) el.zoneDesc.textContent = 'Hoa sen toả hương ngát, nơi thả hoa đăng cầu bình an.';
     if (el.btnZoneAction) el.btnZoneAction.textContent = 'Thả đèn nguyện';
   } else {
@@ -422,25 +457,25 @@ function handleZoneChange(key, zone) {
   }
 
   // Cập nhật tab active trên quickNav
-  document.querySelectorAll('.nav-pill').forEach((pill) => {
+  document.querySelectorAll('.nav-chip, .nav-pill').forEach((pill) => {
     pill.classList.toggle('active', pill.dataset.loc === key);
   });
 }
 
 function handleZoneAction() {
   const k = state.currentZoneKey;
-  if (k === 'thapchuong') {
+  if (k === 'bellTower' || k === 'thapchuong') {
     Audio.ringBell();
     addMerit(5);
     toast('Thỉnh Đại Hồng Chung · Công đức vô lượng');
-  } else if (k === 'hosen') {
+  } else if (k === 'pond' || k === 'hosen') {
     openLanternModal();
-  } else if (k === 'chanhdien') {
+  } else if (k === 'mainHall' || k === 'chanhdien') {
     if (el.prayerSection) el.prayerSection.classList.remove('hidden');
     if (el.btnTogglePrayer) el.btnTogglePrayer.classList.add('highlight');
     tapFish();
     toast('Đang quỳ tụng kinh tại Chánh Điện');
-  } else if (k === 'quanam') {
+  } else if (k === 'quanAm' || k === 'quanam') {
     Audio.chime();
     addMerit(3);
     setAura(true);
@@ -462,7 +497,7 @@ function openLanternModal() {
 
 function renderWishList() {
   const wishes = state.data.wishes || [];
-  if (el.lanternCount) el.lanternCount.textContent = `${wishes.length} ngọn đèn đang sáng`;
+  if (el.lanternCount) el.lanternCount.textContent = `${wishes.length} ngọn đèn đang sáng lung linh`;
 
   const frag = document.createDocumentFragment();
   wishes.forEach((w) => {
@@ -530,59 +565,55 @@ function setupVirtualJoystick() {
   if (!zone || !knob) return;
 
   let active = false;
-  let startX = 0;
-  let startY = 0;
+  let originX = 0;
+  let originY = 0;
   const maxRadius = 38;
 
   function onStart(cx, cy) {
     active = true;
     const rect = zone.getBoundingClientRect();
-    startX = rect.left + rect.width / 2;
-    startY = rect.top + rect.height / 2;
+    originX = rect.left + rect.width / 2;
+    originY = rect.top + rect.height / 2;
     onMove(cx, cy);
   }
 
   function onMove(cx, cy) {
     if (!active) return;
-    const dx = cx - startX;
-    const dy = cy - startY;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    const clampedDist = Math.min(dist, maxRadius);
+    const dx = cx - originX;
+    const dy = cy - originY;
+    const dist = Math.hypot(dx, dy);
     const angle = Math.atan2(dy, dx);
+    const capped = Math.min(dist, maxRadius);
 
-    const targetX = Math.cos(angle) * clampedDist;
-    const targetY = Math.sin(angle) * clampedDist;
+    const nx = Math.cos(angle) * capped;
+    const ny = Math.sin(angle) * capped;
+    knob.style.transform = `translate(${nx}px, ${ny}px)`;
 
-    knob.style.transform = `translate(calc(-50% + ${targetX}px), calc(-50% + ${targetY}px))`;
-
-    // Chuẩn hoá toạ độ joystick (-1 -> 1)
-    const normX = targetX / maxRadius;
-    const normY = targetY / maxRadius;
+    // Chuẩn hoá vector sang [-1, 1]
+    const normX = nx / maxRadius;
+    const normY = ny / maxRadius;
     setJoystickMove(normX, normY);
   }
 
   function onEnd() {
     active = false;
-    knob.style.transform = 'translate(-50%, -50%)';
+    knob.style.transform = 'translate(0px, 0px)';
     setJoystickMove(0, 0);
   }
 
-  zone.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    const touch = e.touches[0];
-    onStart(touch.clientX, touch.clientY);
-  }, { passive: false });
+  zone.addEventListener('pointerdown', (e) => {
+    zone.setPointerCapture(e.pointerId);
+    onStart(e.clientX, e.clientY);
+  });
 
-  window.addEventListener('touchmove', (e) => {
-    if (!active) return;
-    const touch = e.touches[0];
-    onMove(touch.clientX, touch.clientY);
-  }, { passive: true });
+  zone.addEventListener('pointermove', (e) => {
+    if (active) onMove(e.clientX, e.clientY);
+  });
 
-  window.addEventListener('touchend', onEnd);
-  window.addEventListener('touchcancel', onEnd);
+  zone.addEventListener('pointerup', () => onEnd());
+  zone.addEventListener('pointercancel', () => onEnd());
 
-  // Hỗ trợ chuột thử nghiệm trên PC
+  // Chuột thông thường
   zone.addEventListener('mousedown', (e) => {
     onStart(e.clientX, e.clientY);
     const mouseMove = (ev) => onMove(ev.clientX, ev.clientY);
@@ -596,7 +627,7 @@ function setupVirtualJoystick() {
   });
 }
 
-/* ================= TABS KINH ================= */
+/* ================= CHỌN BÀI KINH ================= */
 
 function buildTabs() {
   if (!el.tabs) return;
@@ -673,7 +704,7 @@ function renderProgress() {
   const done = Math.min(state.index, total);
   const pct = state.finished ? 100 : (done / total) * 100;
   el.progressBar.style.width = `${pct}%`;
-  el.stepInfo.textContent = `${done} / ${total}`;
+  el.stepInfo.textContent = `${done} / ${total} câu`;
 }
 
 /* ================= NHỊP & GIỌNG ĐỌC ================= */
@@ -869,4 +900,9 @@ function registerSW() {
   }
 }
 
-boot();
+// Khởi chạy khi DOM đã sẵn sàng
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', boot);
+} else {
+  boot();
+}
