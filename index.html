@@ -1,20 +1,23 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-<meta name="theme-color" content="#160d08" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="Niệm Phật" />
-<meta name="description" content="Chùa 3D trên điện thoại – niệm Phật, lần tràng hạt, gõ mõ, tích công đức." />
-<title>Niệm Phật Online</title>
-<link rel="manifest" href="manifest.webmanifest" />
-<link rel="apple-touch-icon" href="icons/icon-192.png" />
-<link rel="icon" href="icons/icon-192.png" />
-<link rel="stylesheet" href="css/app.css" />
-<script type="importmap">
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#160d08" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Chùa Online" />
+  <meta name="description"
+    content="Chùa Online 3D – Đi chùa, dạo khuôn viên, viếng thiền viện, tụng kinh lồng tiếng, thả đèn nguyện và tích lũy công đức." />
+  <title>Chùa Vô Lượng - Đi Chùa & Tụng Kinh Online</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="css/app.css" />
+  <script type="importmap">
 {
   "imports": {
     "three": "https://unpkg.com/three@0.164.1/build/three.module.js"
@@ -22,132 +25,305 @@
 }
 </script>
 </head>
+
 <body>
 
-<canvas id="scene" aria-hidden="true"></canvas>
+  <!-- Canvas 3D Three.js -->
+  <canvas id="scene" aria-label="Khuôn viên chùa 3D"></canvas>
 
-<div id="ui">
+  <!-- Giao diện lớp trên UI -->
+  <div id="ui">
 
-  <header id="topbar">
-    <button class="pill" id="btnBack" aria-label="Quay lại">
-      <svg viewBox="0 0 24 24" class="ic"><path d="M14.5 5 8 12l6.5 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Quay lại
-    </button>
+    <!-- Thanh thông tin trên cùng (Topbar phong cách Chùa Online) -->
+    <header id="topbar">
+      <!-- Khối Pháp danh & Cấp bậc -->
+      <button class="user-chip" id="btnEditName" title="Nhấn để đổi pháp danh">
+        <div class="user-badge" id="topLevelNum">1</div>
+        <div class="user-meta">
+          <b id="topPlayerName">Quảng Hạnh 55</b>
+          <span>Cấp <span id="lblLevel">1</span> · <span id="topMerit">10</span> công đức</span>
+        </div>
+      </button>
 
-    <div class="title">
-      <b>Chùa Hương Sen</b>
-      <span><i class="dot"></i><em id="onlineCount">12</em> người đang niệm</span>
+      <!-- Khuôn viên & Trạng thái chùa -->
+      <div class="temple-status">
+        <div class="temple-name">Chùa Vô Lượng</div>
+        <div class="online-indicator">
+          <i class="dot-live"></i>
+          <span id="onlineCount">136</span> đang online
+        </div>
+      </div>
+
+      <!-- Cụm nút công cụ: Nhạc nền, Thả đèn, Tụng kinh, Cài đặt -->
+      <div class="top-actions">
+        <button class="pill-btn" id="btnToggleBgm" title="Bật/Tắt Nhạc nền thiền">
+          <span id="bgmIcon">🎵</span>
+          <span class="btn-text">Nhạc thiền</span>
+        </button>
+
+        <button class="pill-btn highlight" id="btnOpenLantern" title="Đèn nguyện hồ sen">
+          <span>🪷</span>
+          <span class="btn-text">Đèn nguyện</span>
+        </button>
+
+        <button class="pill-btn" id="btnTogglePrayer" title="Bật/Tắt Bảng tụng kinh">
+          <span>📿</span>
+          <span class="btn-text">Tụng kinh</span>
+        </button>
+
+        <button class="pill-btn icon-only" id="btnSettings" title="Cài đặt">
+          <svg viewBox="0 0 24 24" class="ic">
+            <circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8" />
+            <path
+              d="M12 3.2v2.2M12 18.6v2.2M4.8 12H2.6M21.4 12h-2.2M6.9 6.9 5.3 5.3M18.7 18.7l-1.6-1.6M6.9 17.1l-1.6 1.6M18.7 5.3l-1.6 1.6"
+              fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Thanh dịch chuyển nhanh tới các Thiền Viện chính & phụ -->
+    <nav id="quickNav" aria-label="Đi đến thiền viện">
+      <button class="nav-chip active" data-loc="entrance">
+        <i>⛩️</i> Sân Chùa
+      </button>
+      <button class="nav-chip" data-loc="mainHall">
+        <i>🏛️</i> Chánh Điện
+      </button>
+      <button class="nav-chip" data-loc="pond">
+        <i>🪷</i> Hồ Sen
+      </button>
+      <button class="nav-chip" data-loc="quanAm">
+        <i>🌸</i> Quán Âm Các
+      </button>
+      <button class="nav-chip" data-loc="bellTower">
+        <i>🔔</i> Lầu Chuông
+      </button>
+    </nav>
+
+    <!-- Thông báo gợi ý tương tác khi nhân vật lại gần công trình -->
+    <div id="zonePrompt" class="zone-prompt hidden">
+      <div class="prompt-content">
+        <span class="prompt-icon" id="promptIcon">🏛️</span>
+        <div class="prompt-info">
+          <b id="promptTitle">Chánh Điện Vô Lượng</b>
+          <small id="promptDesc">Đại chúng đang tụng kinh trang nghiêm</small>
+        </div>
+        <button class="prompt-btn" id="promptActionBtn">Vào Ngay</button>
+      </div>
     </div>
 
-    <button class="pill icon-only" id="btnSettings" aria-label="Cài đặt">
-      <svg viewBox="0 0 24 24" class="ic"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 3.2v2.2M12 18.6v2.2M4.8 12H2.6M21.4 12h-2.2M6.9 6.9 5.3 5.3M18.7 18.7l-1.6-1.6M6.9 17.1l-1.6 1.6M18.7 5.3l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-    </button>
-  </header>
+    <!-- BẢNG TỤNG KINH (PRAYER SECTION) -->
+    <main id="prayerSection" class="prayer-box">
+      <div class="prayer-header">
+        <div class="prayer-title-wrap">
+          <h3 id="currentSutraTitle">Chú Đại Bi</h3>
+          <small id="sutraSubtitle">Thiên thủ thiên nhãn vô ngại đại bi tâm</small>
+        </div>
+        <button class="btn-close-prayer" id="btnClosePrayer" title="Thu nhỏ bảng tụng">✕</button>
+      </div>
 
-  <div id="levelChip">
-    <div class="ring"><i id="levelNum">1</i></div>
-    <div class="lvl-text">
-      <b id="meritNum">0</b>
-      <small>công đức</small>
-      <div class="xp"><i id="xpBar"></i></div>
+      <!-- Chọn bài kinh -->
+      <div id="sutraTabs" class="sutra-tabs" aria-label="Danh sách bài kinh"></div>
+
+      <!-- Lựa chọn Chế độ đọc kinh: TỰ ĐỌC KINH vs LỒNG TIẾNG ĐỌC KINH -->
+      <div class="voice-mode-selector">
+        <button class="mode-tab active" id="btnModeVoice">
+          <span class="mode-icon">🎙️</span>
+          <div class="mode-text">
+            <b>Lồng tiếng đọc kinh</b>
+            <small>Giọng đọc tụng kinh tự động</small>
+          </div>
+        </button>
+        <button class="mode-tab" id="btnModeSelf">
+          <span class="mode-icon">📖</span>
+          <div class="mode-text">
+            <b>Tự đọc kinh</b>
+            <small>Tự niệm theo nhịp gõ mõ</small>
+          </div>
+        </button>
+      </div>
+
+      <!-- Hiển thị dòng kinh tụng -->
+      <div class="prayer-body">
+        <div id="lines" class="lines-container"></div>
+        <div class="progress-bar-wrap">
+          <div class="progress-fill" id="progressBar"></div>
+        </div>
+        <div class="prayer-meta">
+          <span id="stepInfo">0 / 0 câu</span>
+          <span id="reciteSpeedBadge">Nhịp 5</span>
+        </div>
+      </div>
+
+      <!-- Bộ gõ mõ và điều khiển tụng kinh -->
+      <div class="prayer-controls">
+        <button id="btnFish" class="fish-button" aria-label="Gõ mõ tụng kinh">
+          <svg viewBox="0 0 120 120" aria-hidden="true" class="fish-svg">
+            <defs>
+              <radialGradient id="wood" cx="35%" cy="28%" r="78%">
+                <stop offset="0%" stop-color="#ffd08a" />
+                <stop offset="45%" stop-color="#b87232" />
+                <stop offset="100%" stop-color="#54280e" />
+              </radialGradient>
+              <radialGradient id="hole" cx="50%" cy="40%" r="60%">
+                <stop offset="0%" stop-color="#3a1f0c" />
+                <stop offset="100%" stop-color="#190b05" />
+              </radialGradient>
+            </defs>
+            <ellipse cx="60" cy="62" rx="46" ry="36" fill="url(#wood)" />
+            <ellipse cx="60" cy="62" rx="46" ry="36" fill="none" stroke="#f6d396" stroke-opacity=".6"
+              stroke-width="2.5" />
+            <ellipse cx="60" cy="52" rx="20" ry="12" fill="url(#hole)" />
+            <path d="M22 58c14-10 62-10 76 0" fill="none" stroke="#fae1b4" stroke-opacity=".4" stroke-width="2.5"
+              stroke-linecap="round" />
+          </svg>
+          <span class="fish-hint">Gõ Mõ (Space)</span>
+        </button>
+
+        <div class="control-switches">
+          <label class="toggle-pill">
+            <input type="checkbox" id="chkAuto" />
+            <span class="slider"></span>
+            Tự động tụng
+          </label>
+          <label class="toggle-pill">
+            <input type="checkbox" id="chkVibe" checked />
+            <span class="slider"></span>
+            Rung
+          </label>
+          <div class="speed-slider-group">
+            <label for="rngSpeed">Nhịp mõ:</label>
+            <input type="range" id="rngSpeed" min="1" max="10" step="1" value="5" />
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Hướng dẫn điều khiển góc dưới & Cần điều khiển ảo (Joystick) cho Mobile -->
+    <div class="bottom-bar">
+      <div id="joystickZone" class="joystick-zone">
+        <div id="joystickBase" class="joystick-base">
+          <div id="joystickStick" class="joystick-stick"></div>
+        </div>
+      </div>
+      <div class="move-hint">
+        💡 Chạm đất để di chuyển · Phím WASD · Kéo xoay góc nhìn
+      </div>
     </div>
+
   </div>
 
-  <nav id="sutraTabs" aria-label="Chọn bài kinh"></nav>
+  <!-- PANEL ĐÈN NGUYỆN (Theo phong cách chuaonline.org) -->
+  <div id="lanternModal" class="modal-overlay hidden">
+    <div class="lantern-card">
+      <div class="card-header">
+        <div class="header-title">
+          <span class="gold-icon">🪷</span>
+          <div>
+            <h3>Đèn nguyện</h3>
+            <small>Hơn 100 ngọn đèn đang sáng lung linh trên hồ sen</small>
+          </div>
+        </div>
+        <button class="btn-close-modal" id="btnCloseLantern">✕</button>
+      </div>
 
-  <section id="prayer">
-    <div id="lines"></div>
-    <div class="progress"><i id="progressBar"></i></div>
-    <div class="meta">
-      <span id="stepInfo">0 / 0</span>
-      <span id="sutraInfo">Chú Đại Bi</span>
-    </div>
-  </section>
+      <!-- Tabs chuyển danh mục đèn -->
+      <div class="modal-tabs">
+        <button class="m-tab active">Chùa này</button>
+        <button class="m-tab">Tất cả chùa</button>
+        <button class="m-tab">Hoạt động</button>
+      </div>
 
-  <div id="controls">
-    <button id="btnFish" class="fish" aria-label="Gõ mõ">
-      <svg viewBox="0 0 120 120" aria-hidden="true">
-        <defs>
-          <radialGradient id="wood" cx="35%" cy="28%" r="78%">
-            <stop offset="0%" stop-color="#e0a05a"/>
-            <stop offset="45%" stop-color="#b06e2e"/>
-            <stop offset="100%" stop-color="#5c3315"/>
-          </radialGradient>
-          <radialGradient id="hole" cx="50%" cy="40%" r="60%">
-            <stop offset="0%" stop-color="#3a1f0c"/>
-            <stop offset="100%" stop-color="#20100a"/>
-          </radialGradient>
-        </defs>
-        <ellipse cx="60" cy="62" rx="46" ry="36" fill="url(#wood)"/>
-        <ellipse cx="60" cy="62" rx="46" ry="36" fill="none" stroke="#f2c37a" stroke-opacity=".55" stroke-width="2"/>
-        <ellipse cx="60" cy="52" rx="20" ry="12" fill="url(#hole)"/>
-        <path d="M22 58c14-10 62-10 76 0" fill="none" stroke="#f7d79b" stroke-opacity=".35" stroke-width="2.5" stroke-linecap="round"/>
-        <circle cx="42" cy="44" r="3" fill="#ffe8bd" opacity=".5"/>
-      </svg>
-      <span class="ripple"></span>
-    </button>
+      <!-- Danh sách lời nguyện gần đây -->
+      <div id="wishesList" class="wishes-scroll"></div>
 
-    <div class="toggles">
-      <label class="sw"><input type="checkbox" id="chkVoice" checked /><span></span>Giọng đọc</label>
-      <label class="sw"><input type="checkbox" id="chkAuto" /><span></span>Tự động</label>
-      <label class="sw"><input type="checkbox" id="chkVibe" checked /><span></span>Rung</label>
-      <div class="speed">
-        <small>Nhịp</small>
-        <input type="range" id="rngSpeed" min="1" max="10" step="1" value="5" />
+      <!-- Form thả đèn nguyện mới -->
+      <div class="wish-form">
+        <div class="input-row">
+          <input type="text" id="inpWishText" placeholder="Nhập lời ước nguyện (cầu bình an, sức khỏe, học tập...)"
+            maxlength="120" />
+        </div>
+        <button class="btn-submit-wish" id="btnSendWish">
+          <span>🪷</span> Thả đèn nguyện
+        </button>
       </div>
     </div>
   </div>
-</div>
 
-<div id="toast" role="status"></div>
-
-<div id="sheet" class="hidden">
-  <div class="sheet-card">
-    <h2>Lời nguyện hôm nay</h2>
-    <p class="muted">Cài lên màn hình chính để dùng như app: mở menu trình duyệt → <b>Thêm vào MH chính</b>.</p>
-    <div class="stats">
-      <div><b id="stTotal">0</b><small>Tổng công đức</small></div>
-      <div><b id="stToday">0</b><small>Hôm nay</small></div>
-      <div><b id="stLevel">1</b><small>Cấp</small></div>
+  <!-- MODAL ĐỔI TÊN PHÁP DANH -->
+  <div id="nameModal" class="modal-overlay hidden">
+    <div class="name-card">
+      <h3>Đổi Pháp Danh</h3>
+      <p class="muted">Nhập pháp danh hoặc tên của bạn hiển thị trong Chùa:</p>
+      <input type="text" id="inpPlayerName" maxlength="24" placeholder="Ví dụ: Quảng Hạnh 55, Diệu Âm..." />
+      <div class="modal-btns">
+        <button class="btn-cancel" id="btnCancelName">Hủy</button>
+        <button class="btn-save" id="btnSaveName">Lưu Pháp Danh</button>
+      </div>
     </div>
-    <label class="row"><span>Giọng đọc kinh</span><input type="checkbox" id="sndVoice" checked /></label>
-    <label class="row"><span>Rung khi gõ mõ</span><input type="checkbox" id="sndVibe" checked /></label>
-    <label class="row"><span>Chuông kết thúc bài</span><input type="checkbox" id="sndBell" checked /></label>
-    <div class="row"><span>Chất lượng 3D</span>
-      <select id="selQuality">
-        <option value="high">Cao</option>
-        <option value="mid" selected>Vừa</option>
-        <option value="low">Thấp (máy yếu)</option>
-      </select>
-    </div>
-    <button class="btn ghost" id="btnReset">Xoá công đức</button>
-    <button class="btn gold" id="btnCloseSheet">Xong</button>
   </div>
-</div>
 
-<div id="boot">
-  <div class="boot-card">
-    <div class="lotus">
-      <svg viewBox="0 0 120 120">
-        <g class="petals">
-          <path d="M60 20c11 12 16 25 16 37S70 82 60 90c-10-8-16-21-16-33s5-25 16-37z"/>
-          <path d="M60 90C45 90 25 80 17 58c16-2 30 4 40 16"/>
-          <path d="M60 90c15 0 35-10 43-32-16-2-30 4-40 16"/>
-          <path d="M60 90c-9-8-27-22-24-46 11 4 18 12 24 24"/>
-          <path d="M60 90c9-8 27-22 24-46-11 4-18 12-24 24"/>
-        </g>
-        <path class="water" d="M14 100c13 5 26 7 46 7s33-2 46-7" fill="none" stroke="#f0c56a" stroke-width="3" stroke-linecap="round"/>
-      </svg>
+  <!-- MODAL CÀI ĐẶT -->
+  <div id="settingsSheet" class="modal-overlay hidden">
+    <div class="sheet-card">
+      <h2>Cài Đặt Chùa Online</h2>
+      <div class="stats-grid">
+        <div><b id="stTotal">0</b><small>Tổng công đức</small></div>
+        <div><b id="stToday">0</b><small>Hôm nay</small></div>
+        <div><b id="stLevel">1</b><small>Cấp bậc</small></div>
+      </div>
+
+      <div class="setting-item">
+        <span>Nhạc nền thiền định (BGM)</span>
+        <input type="checkbox" id="sndBgm" checked />
+      </div>
+      <div class="setting-item">
+        <span>Lồng tiếng đọc kinh</span>
+        <input type="checkbox" id="sndVoice" checked />
+      </div>
+      <div class="setting-item">
+        <span>Rung phản hồi khi gõ mõ</span>
+        <input type="checkbox" id="sndVibe" checked />
+      </div>
+      <div class="setting-item">
+        <span>Tiếng chuông kết bài kinh</span>
+        <input type="checkbox" id="sndBell" checked />
+      </div>
+      <div class="setting-item">
+        <span>Chất lượng đồ họa 3D</span>
+        <select id="selQuality">
+          <option value="high">Cao</option>
+          <option value="mid" selected>Vừa</option>
+          <option value="low">Thấp (tiết kiệm pin)</option>
+        </select>
+      </div>
+
+      <button class="btn-danger" id="btnResetData">Xoá dữ liệu công đức</button>
+      <button class="btn-save" id="btnCloseSettings">Đóng</button>
     </div>
-    <h1>Niệm Phật Online</h1>
-    <p>Lên chùa mọi lúc, mọi nơi</p>
-    <button class="btn gold big" id="btnEnter">Vào chùa</button>
-    <small id="bootMsg">Chạm để bắt đầu · nên đeo tai nghe</small>
   </div>
-</div>
 
-<noscript><div class="nojs">Cần bật JavaScript để vào chùa.</div></noscript>
+  <!-- MÀN HÌNH CHÀO (BOOT SCREEN) -->
+  <div id="bootScreen">
+    <div class="boot-box">
+      <div class="lotus-glow">🪷</div>
+      <h1>Chùa Vô Lượng</h1>
+      <p class="slogan">Không gian tịnh tâm · Niệm Phật · Thả đèn nguyện 3D</p>
+      <button class="btn-enter" id="btnEnter">Bước Vào Chùa</button>
+      <small class="headphone-tip">Khuyến khích bật âm lượng hoặc đeo tai nghe để thưởng thức tiếng chuông & nhạc
+        thiền</small>
+    </div>
+  </div>
 
-<script type="module" src="js/app.js"></script>
+  <!-- Toast thông báo -->
+  <div id="toast" role="status" class="toast"></div>
+
+  <noscript>
+    <div class="nojs">Vui lòng bật JavaScript để vào chùa.</div>
+  </noscript>
+
+  <script type="module" src="js/app.js"></script>
 </body>
+
 </html>
