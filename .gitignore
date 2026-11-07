@@ -1,0 +1,47 @@
+# ── Dependencies / build ──────────────────────────────────────
+node_modules/
+dist/
+build/
+.cache/
+*.log
+
+# ── Biến môi trường & khoá bí mật ─────────────────────────────
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.keystore
+secrets.json
+credentials.json
+
+# ── Cấu hình Roo Code / Cline (chứa API key) ──────────────────
+.roo/
+.rooveterinaryinc.roo-cline/
+.cline/
+.clinerules
+.roomodes
+*.roo-cline.json
+.roo-config.json
+
+# ── Cấu hình editor / IDE cục bộ ──────────────────────────────
+.vscode/
+.idea/
+*.code-workspace
+
+# ── Hệ điều hành ──────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── File tạm / script nháp dùng khi phát triển ────────────────
+_tmp_ref/
+_tmp*/
+_tmp*.mjs
+_tmp*.js
+_scanref*.mjs
+_checkA11.mjs
+_chksw.js
+co_app.txt
+co_bundle.js

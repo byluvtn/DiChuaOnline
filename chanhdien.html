@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1,
+             user-scalable=no, viewport-fit=cover" />
+    <title>Chánh Điện — Khung UI tĩnh</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="css/chanhdien-hud.css" />
+</head>
+
+<body>
+
+    <!-- ═══════════════════════════════════════════════════════
+     Khung 390×844 — toàn bộ UI nổi phủ trên canvas
+═══════════════════════════════════════════════════════ -->
+    <div class="cd-app" id="cdApp">
+
+        <!-- ── Canvas 3D (tạm: div gradient) ─────────────────── -->
+        <div class="cd-scene" aria-hidden="true">
+            <span class="cd-scene-label">SCENE 3D</span>
+        </div>
+        <!-- Vignette phủ trên canvas -->
+        <div class="cd-vignette" aria-hidden="true"></div>
+
+
+        <!-- ── TopBar trong suốt ──────────────────────────────── -->
+        <header class="cd-topbar" role="banner">
+
+            <!-- Trái: avatar + pháp danh + cấp + thanh công đức -->
+            <button class="cd-user" type="button" aria-label="Trang cá nhân của Quảng Hạnh, Cấp 1">
+                <div class="cd-avatar" aria-hidden="true">QH</div>
+                <div class="cd-user-meta">
+                    <div class="cd-user-line">
+                        <span class="cd-name">Quảng Hạnh</span>
+                        <span class="cd-level" aria-label="Cấp 1">1</span>
+                    </div>
+                    <div class="cd-merit" aria-label="1.294 công đức">
+                        <div class="cd-merit-coin" aria-hidden="true"></div>
+                        <span class="cd-merit-value">1.294</span>
+                        <div class="cd-merit-track" role="progressbar" aria-valuenow="34" aria-valuemin="0"
+                            aria-valuemax="100" aria-label="Tiến độ công đức">
+                            <div class="cd-merit-fill"></div>
+                        </div>
+                    </div>
+                </div>
+            </button>
+
+            <!-- Phải: chuông + thư (2 nút tròn 44×44) -->
+            <div class="cd-topbar-actions" role="group" aria-label="Thông báo và tin nhắn">
+
+                <button class="cd-icon-btn" type="button" aria-label="Chuông thông báo">
+                    <!-- Icon chuông -->
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                        stroke-linejoin="round" aria-hidden="true">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                    </svg>
+                    <span class="cd-badge" aria-label="Có thông báo mới"></span>
+                </button>
+
+                <button class="cd-icon-btn" type="button" aria-label="Hộp thư">
+                    <!-- Icon thư -->
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                        stroke-linejoin="round" aria-hidden="true">
+                        <rect x="2" y="4" width="20" height="16" rx="2" />
+                        <path d="m2 7 8.5 6a2.5 2.5 0 0 0 3 0L22 7" />
+                    </svg>
+                </button>
+
+            </div>
+        </header>
+
+
+        <!-- ── Hàng pill khu vực ─────────────────────────────── -->
+        <nav class="cd-areas" aria-label="Khu vực trong chùa">
+            <button class="cd-area" type="button">Sân chùa</button>
+            <button class="cd-area is-active" type="button" aria-current="page">Chánh Điện</button>
+            <button class="cd-area" type="button">Hồ Sen</button>
+            <button class="cd-area" type="button">Lầu Chuông</button>
+        </nav>
+
+
+        <!-- ── 3 pill hành động nổi bên phải trên BottomNav ──── -->
+        <div class="cd-actions" role="group" aria-label="Hành động trong chánh điện">
+
+            <button class="cd-pill" type="button" onclick="console.log('Lạy Phật')" aria-label="Lạy Phật">
+                <!-- Icon bàn tay chắp -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" aria-hidden="true">
+                    <path d="M9 11V6a2 2 0 0 1 4 0v5" />
+                    <path d="M13 11V5a2 2 0 0 1 4 0v6" />
+                    <path d="M5 14a2 2 0 0 1 4-1v2" />
+                    <path d="M9 15v2a5 5 0 0 0 10 0v-5a2 2 0 0 0-2-2" />
+                </svg>
+                Lạy Phật
+            </button>
+
+            <button class="cd-pill" type="button" onclick="console.log('Gõ Mõ')" aria-label="Gõ Mõ">
+                <!-- Icon âm thanh / mõ -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="4" />
+                    <path d="M12 8V4" />
+                    <path d="M12 20v-4" />
+                    <path d="M8 12H4" />
+                    <path d="M20 12h-4" />
+                </svg>
+                Gõ Mõ
+            </button>
+
+            <button class="cd-pill" type="button" onclick="console.log('Thắp Đèn')" aria-label="Thắp Đèn">
+                <!-- Icon ngọn lửa / đèn -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 2c0 6-6 8-6 13a6 6 0 0 0 12 0c0-5-6-7-6-13Z" />
+                    <path d="M12 12c0 3-2 4-2 6a2 2 0 0 0 4 0c0-2-2-3-2-6Z" />
+                </svg>
+                Thắp Đèn
+            </button>
+
+        </div>
+
+
+        <!-- ── BottomNav — đúng 5 mục (mục 6 DESIGN.md) ─────── -->
+        <nav class="cd-nav" aria-label="Điều hướng chính">
+
+            <!-- 1. Sân chùa -->
+            <button class="cd-nav-item" type="button" aria-label="Sân chùa">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" aria-hidden="true">
+                    <!-- Mái chùa đơn giản -->
+                    <path d="M3 10 12 3l9 7" />
+                    <rect x="5" y="10" width="14" height="11" rx="1" />
+                    <path d="M9 21v-6h6v6" />
+                </svg>
+                <span>Sân chùa</span>
+            </button>
+
+            <!-- 2. Thiền -->
+            <button class="cd-nav-item" type="button" aria-label="Thiền">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" aria-hidden="true">
+                    <!-- Người ngồi thiền -->
+                    <circle cx="12" cy="6" r="2" />
+                    <path d="M6 17c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+                    <path d="M4 19h16" />
+                    <path d="M9 13c-.5 1.5-2 3-3 4" />
+                    <path d="M15 13c.5 1.5 2 3 3 4" />
+                </svg>
+                <span>Thiền</span>
+            </button>
+
+            <!-- 3. Lễ Phật — nút giữa nổi 56px, nền --accent -->
+            <div class="cd-nav-item cd-nav-center" aria-label="Lễ Phật">
+                <button class="cd-fab" type="button" aria-label="Lễ Phật — hành động chính">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                        stroke-linejoin="round" aria-hidden="true">
+                        <!-- Bàn tay chắp / vái lạy -->
+                        <path d="M7.5 12A4.5 4.5 0 0 1 12 7.5M12 7.5A4.5 4.5 0 0 1 16.5 12" />
+                        <path d="M9 14c0 1.66 1.34 3 3 3s3-1.34 3-3" />
+                        <path d="M12 3v2" />
+                        <path d="M12 19v2" />
+                        <path d="M3 12h2" />
+                        <path d="M19 12h2" />
+                    </svg>
+                </button>
+                <span class="cd-fab-label">Lễ Phật</span>
+            </div>
+
+            <!-- 4. Tụng kinh -->
+            <button class="cd-nav-item" type="button" aria-label="Tụng kinh">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" aria-hidden="true">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                </svg>
+                <span>Tụng kinh</span>
+            </button>
+
+            <!-- 5. Cá nhân -->
+            <button class="cd-nav-item" type="button" aria-label="Cá nhân">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="7" r="4" />
+                    <path d="M4 21c0-4.42 3.58-8 8-8s8 3.58 8 8" />
+                </svg>
+                <span>Cá nhân</span>
+            </button>
+
+        </nav>
+
+    </div><!-- /.cd-app -->
+
+</body>
+
+</html>

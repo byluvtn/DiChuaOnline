@@ -9,14 +9,87 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Chùa Online" />
+  <meta name="apple-mobile-web-app-title" content="Chùa Vô Lượng" />
   <meta name="description"
-    content="Chùa Online 3D – Đi chùa, dạo khuôn viên, viếng thiền viện, tụng kinh lồng tiếng, thả đèn nguyện và tích lũy công đức." />
-  <title>Chùa Vô Lượng - Đi Chùa & Tụng Kinh Online</title>
+    content="Chùa Vô Lượng 3D – Đi chùa online, dạo khuôn viên, viếng thiền viện, tụng kinh lồng tiếng, lần tràng hạt 108 hạt, thả đèn nguyện và tích lũy công đức mỗi ngày." />
+  <meta name="keywords"
+    content="đi chùa online, chùa 3d, tụng kinh online, niệm phật, lần tràng hạt, gõ mõ, tích công đức, thiền, chùa vô lượng" />
+  <meta name="author" content="Chùa Vô Lượng" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <title>Chùa Vô Lượng - Đi Chùa &amp; Tụng Kinh Online 3D</title>
+
+  <!-- Canonical: đường dẫn tương đối, trình thu thập tự ghép với URL trang -->
+  <link rel="canonical" href="./" />
+
+  <!-- Open Graph (Facebook, Zalo, Messenger) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Chùa Vô Lượng" />
+  <meta property="og:locale" content="vi_VN" />
+  <meta property="og:title" content="Chùa Vô Lượng - Đi Chùa &amp; Tụng Kinh Online 3D" />
+  <meta property="og:description"
+    content="Bước vào khuôn viên chùa 3D, gõ mõ tụng kinh, lần tràng hạt 108 hạt, thả đèn hoa đăng và tích công đức mỗi ngày. Chơi được ngay trên điện thoại, không cần cài đặt." />
+  <meta property="og:image" content="icons/icon-512.png" />
+  <meta property="og:image:width" content="512" />
+  <meta property="og:image:height" content="512" />
+  <meta property="og:image:alt" content="Hoa sen vàng trên nền nâu trầm - biểu tượng Chùa Vô Lượng" />
+
+  <!-- Twitter / X card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Chùa Vô Lượng - Đi Chùa &amp; Tụng Kinh Online 3D" />
+  <meta name="twitter:description"
+    content="Đi chùa online trong không gian 3D: tụng kinh, lần tràng hạt, dâng lễ, xin xăm và thả đèn nguyện." />
+  <meta name="twitter:image" content="icons/icon-512.png" />
+
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
   <link rel="stylesheet" href="css/app.css" />
+  <link rel="stylesheet" href="css/garden-hud.css" />
+
+  <!-- Dữ liệu có cấu trúc: giúp Google hiểu đây là ứng dụng web du lịch/giải trí -->
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "#organization",
+      "name": "Chùa Vô Lượng",
+      "description": "Không gian đi chùa trực tuyến 3D dành cho người Việt.",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "icons/icon-512.png",
+        "width": 512,
+        "height": 512
+      }
+    },
+    {
+      "@type": "WebSite",
+      "@id": "#website",
+      "name": "Chùa Vô Lượng",
+      "inLanguage": "vi-VN",
+      "publisher": { "@id": "#organization" }
+    },
+    {
+      "@type": ["WebApplication", "VideoGame"],
+      "@id": "#app",
+      "name": "Chùa Vô Lượng - Đi Chùa Online 3D",
+      "description": "Đi chùa online: dạo khuôn viên 3D, tụng kinh lồng tiếng, lần tràng hạt 108 hạt, dâng lễ, xin xăm, thả đèn nguyện và tích lũy công đức.",
+      "inLanguage": "vi-VN",
+      "applicationCategory": "LifestyleApplication",
+      "operatingSystem": "Web, Android, iOS",
+      "browserRequirements": "Cần trình duyệt hỗ trợ WebGL",
+      "isAccessibleForFree": true,
+      "publisher": { "@id": "#organization" },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "VND"
+      }
+    }
+  ]
+}
+  </script>
   <script type="importmap">
 {
   "imports": {
@@ -42,6 +115,10 @@
         <div class="user-meta">
           <b id="topPlayerName">Quảng Hạnh 55</b>
           <span>Cấp <span id="lblLevel">1</span> · <span id="topMerit">10</span> công đức</span>
+          <div class="xp-bar-wrap" aria-hidden="true">
+            <div id="xpBar" class="xp-bar-fill" style="width:0%"></div>
+          </div>
+          <small id="xpNext" class="xp-next-hint"></small>
         </div>
       </button>
 
@@ -50,7 +127,7 @@
         <div class="temple-name">Chùa Vô Lượng</div>
         <div class="online-indicator">
           <i class="dot-live"></i>
-          <span id="onlineCount">136</span> đang online
+          <span id="onlineCount">—</span><span id="onlineStatus">Chưa kết nối dữ liệu online</span>
         </div>
       </div>
 
@@ -82,8 +159,20 @@
       </div>
     </header>
 
+    <!-- Minimap tròn góc trên trái: vẽ bằng canvas 2D, phản chiếu trực tiếp
+         hình học khuôn viên + vị trí người chơi và đại chúng -->
+    <div id="minimapHud" class="minimap-hud hidden">
+      <button id="btnMinimap" class="minimap-ring" type="button" aria-label="Mở bản đồ chùa"
+        title="Nhấn để mở bản đồ lớn">
+        <canvas id="minimapCanvas" class="minimap-canvas" width="112" height="112" aria-hidden="true"></canvas>
+      </button>
+      <span id="minimapLabel" class="minimap-label">Sân Chùa</span>
+    </div>
+
     <!-- Thanh dịch chuyển nhanh tới các Thiền Viện chính & phụ -->
     <nav id="quickNav" aria-label="Đi đến thiền viện">
+      <button class="nav-chip" data-loc="meditation"><i>🧘</i> Sân thiền</button>
+      <button class="nav-chip" data-loc="garden"><i>🌿</i> Vườn thiền</button>
       <button class="nav-chip active" data-loc="entrance">
         <i>⛩️</i> Sân Chùa
       </button>
@@ -114,13 +203,18 @@
     </div>
 
     <!-- BẢNG TỤNG KINH (PRAYER SECTION) -->
-    <main id="prayerSection" class="prayer-box">
+    <main id="prayerSection" class="prayer-box hidden">
       <div class="prayer-header">
         <div class="prayer-title-wrap">
           <h3 id="currentSutraTitle">Chú Đại Bi</h3>
           <small id="sutraSubtitle">Thiên thủ thiên nhãn vô ngại đại bi tâm</small>
         </div>
-        <button class="btn-close-prayer" id="btnClosePrayer" title="Thu nhỏ bảng tụng">✕</button>
+        <div class="prayer-actions">
+          <!-- A11 — thu gọn / mở rộng bảng tụng -->
+          <button class="btn-collapse-prayer" id="btnCollapsePrayer" title="Thu gọn bảng tụng"
+            aria-label="Thu gọn hoặc mở rộng bảng tụng" aria-expanded="true">▾</button>
+          <button class="btn-close-prayer" id="btnClosePrayer" title="Thu nhỏ bảng tụng">✕</button>
+        </div>
       </div>
 
       <!-- Chọn bài kinh -->
@@ -181,6 +275,11 @@
           <span class="fish-hint">Gõ Mõ (Space)</span>
         </button>
 
+        <!-- A2 — bộ đếm tiếng mõ hôm nay -->
+        <div id="tapCounter" class="tap-counter" aria-label="Số tiếng gõ mõ hôm nay">
+          🪵 <b id="tapCount">0</b>/<span id="tapGoal">10</span> mõ hôm nay
+        </div>
+
         <div class="control-switches">
           <label class="toggle-pill">
             <input type="checkbox" id="chkAuto" />
@@ -212,17 +311,44 @@
       </div>
     </div>
 
+    <aside class="community-note" aria-label="Trạng thái cộng đồng">
+      <b>☸ Góc an yên</b>
+      <p>Chúc bạn một ngày thân tâm an lạc.</p>
+      <small>Bản trải nghiệm cục bộ · Nhân vật trong chùa là NPC, không phải người online.</small>
+      <a href="https://chuaonline.org" target="_blank" rel="noopener noreferrer">Mở cộng đồng tại chuaonline.org ↗</a>
+    </aside>
+    <nav class="utility-dock" aria-label="Công cụ cá nhân">
+      <button id="btnMeditate" title="Đi đến đệm thiền gần nhất"><span>🧘</span>Ngồi thiền</button>
+      <button id="btnCharacter" title="Xem nhân vật"><span>🧑‍🦲</span>Nhân vật</button>
+      <button id="btnDockName" title="Đổi pháp danh"><span>📜</span>Pháp danh</button>
+      <button id="btnDockSettings" title="Cài đặt"><span>⚙️</span>Cài đặt</button>
+      <button id="btnOpenQuest" title="Nhiệm vụ hôm nay"><span>📋</span>Nhiệm vụ</button>
+      <button id="btnHowToPlay" title="Cách chơi"><span>❓</span>Cách chơi</button>
+      <button id="btnOpenBead" title="Tràng hạt 108 hạt"><span>📿</span>Tràng hạt</button>
+      <button id="btnOpenOffering" title="Dâng lễ tại Chánh Điện"><span>🪷</span>Dâng lễ</button>
+      <button id="btnOpenFortune" title="Xin xăm hôm nay"><span>🎋</span>Xin xăm</button>
+      <button id="btnCaptureShot" title="Chụp ảnh khuôn viên chùa"><span>📷</span>Chụp ảnh</button>
+      <button id="btnOpenMap" title="Bản đồ khuôn viên chùa"><span>🗺️</span>Bản đồ</button>
+    </nav>
+    <nav class="devotion-dock" aria-label="Thực hành tại chùa">
+      <button data-devotion="pray"><span>🙏</span>Lễ Phật</button>
+      <button data-devotion="sutra"><span>📖</span>Tụng kinh</button>
+      <button data-devotion="fish"><span>📿</span>Gõ mõ</button>
+      <button data-devotion="bell"><span>🔔</span>Thỉnh chuông</button>
+      <button data-devotion="lantern"><span>🪷</span>Thả đèn</button>
+      <button data-devotion="quanAm"><span>🌸</span>Quán Âm</button>
+    </nav>
   </div>
 
   <!-- PANEL ĐÈN NGUYỆN (Theo phong cách chuaonline.org) -->
-  <div id="lanternModal" class="modal-overlay hidden">
+  <div id="lanternModal" class="modal-overlay" aria-label="Bảng đèn nguyện">
     <div class="lantern-card">
       <div class="card-header">
         <div class="header-title">
           <span class="gold-icon">🪷</span>
           <div>
             <h3>Đèn nguyện</h3>
-            <small id="lanternCount">Hơn 100 ngọn đèn đang sáng lung linh trên hồ sen</small>
+            <small id="lanternCount">Lời nguyện lưu trên thiết bị này</small>
           </div>
         </div>
         <button class="btn-close-modal" id="btnCloseLantern">✕</button>
@@ -230,9 +356,9 @@
 
       <!-- Tabs chuyển danh mục đèn -->
       <div class="modal-tabs">
-        <button class="m-tab active">Chùa này</button>
-        <button class="m-tab">Tất cả chùa</button>
-        <button class="m-tab">Hoạt động</button>
+        <button class="m-tab active" type="button">Trên máy này</button>
+        <a class="source-link" href="https://chuaonline.org" target="_blank" rel="noopener noreferrer">Cộng đồng thật
+          ↗</a>
       </div>
 
       <!-- Danh sách lời nguyện gần đây -->
@@ -244,10 +370,29 @@
           <input type="text" id="inpWishText" placeholder="Nhập lời ước nguyện (cầu bình an, sức khỏe, học tập...)"
             maxlength="120" />
         </div>
+        <p class="local-data-note">Chỉ lưu trong trình duyệt, chưa gửi tới chuaonline.org.</p>
         <button class="btn-submit-wish" id="btnSendWish">
           <span>🪷</span> Thả đèn nguyện
         </button>
       </div>
+    </div>
+  </div>
+
+  <div id="characterModal" class="modal-overlay hidden" role="dialog" aria-modal="true"
+    aria-labelledby="characterTitle">
+    <div class="character-card">
+      <header>
+        <h2 id="characterTitle">Nhân vật</h2><button id="btnCloseCharacter" class="btn-close-modal"
+          aria-label="Đóng xem nhân vật">✕</button>
+      </header>
+      <canvas id="characterPreview" aria-label="Xem trước nhân vật chibi đã chọn"></canvas>
+      <p id="characterLabel">Chú tiểu · Áo cam</p>
+      <div class="avatar-options" aria-label="Chọn nhân vật">
+        <button data-avatar="chutieu" aria-pressed="true">Chú tiểu</button>
+        <button data-avatar="sunam" aria-pressed="false">Sư nam</button>
+        <button data-avatar="sunu" aria-pressed="false">Sư nữ</button>
+      </div>
+      <small>Nhân vật của bạn trong khuôn viên</small>
     </div>
   </div>
 
@@ -298,9 +443,229 @@
           <option value="low">Thấp (tiết kiệm pin)</option>
         </select>
       </div>
+      <div class="setting-item">
+        <span>Ẩn nhân vật NPC (giảm lag)</span>
+        <input type="checkbox" id="chkHideNpc" />
+      </div>
+
+      <div class="setting-item install-item" id="installItem">
+        <div class="install-text">
+          <span>Cài chùa vào màn hình chính</span>
+          <small id="installHint">Mở nhanh như ứng dụng, dùng được khi mất mạng</small>
+        </div>
+        <button type="button" class="btn-install" id="btnInstallApp">Cài</button>
+      </div>
 
       <button class="btn-danger" id="btnResetData">Xoá dữ liệu công đức</button>
       <button class="btn-save" id="btnCloseSettings">Đóng</button>
+    </div>
+  </div>
+
+  <!-- MODAL NHIỆM VỤ NGÀY (A3) -->
+  <div id="questModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="questTitle">
+    <div class="quest-card">
+      <div class="card-header">
+        <div class="header-title">
+          <span class="gold-icon">📋</span>
+          <div>
+            <h3 id="questTitle">Nhiệm vụ hôm nay</h3>
+            <small id="questDate"></small>
+          </div>
+        </div>
+        <button class="btn-close-modal" id="btnCloseQuest">✕</button>
+      </div>
+      <div id="questList" class="quest-list"></div>
+      <div id="questClaimArea" class="quest-claim-area hidden">
+        <p class="quest-claim-msg">🎉 Hoàn thành tất cả nhiệm vụ! Nhận hào quang hôm nay.</p>
+        <button class="btn-submit-wish" id="btnClaimQuest">Nhận thưởng hào quang</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CÁCH CHƠI (A7) -->
+  <div id="howToPlayModal" class="modal-overlay hidden" role="dialog" aria-modal="true"
+    aria-labelledby="howToPlayTitle">
+    <div class="howtoplay-card">
+      <div class="card-header">
+        <div class="header-title">
+          <span class="gold-icon">❓</span>
+          <div>
+            <h3 id="howToPlayTitle">Cách Chơi</h3>
+          </div>
+        </div>
+        <button class="btn-close-modal" id="btnCloseHowToPlay">✕</button>
+      </div>
+      <div class="howtoplay-body">
+        <section class="htp-section">
+          <h4>🕹️ Di chuyển</h4>
+          <p>Kéo joystick ở góc dưới bên trái màn hình để điều khiển nhân vật di chuyển quanh khuôn viên chùa.</p>
+        </section>
+        <section class="htp-section">
+          <h4>🏛️ Khám phá các khu vực</h4>
+          <p>Nhân vật bước vào gần công trình sẽ hiện gợi ý tương tác. Dùng thanh <b>Điều hướng nhanh</b> để dịch chuyển
+            tức thì tới Chánh Điện, Quán Âm Các, Lầu Chuông, Hồ Sen…</p>
+        </section>
+        <section class="htp-section">
+          <h4>📿 Tụng kinh &amp; Gõ mõ</h4>
+          <p>Nhấn <b>Tụng kinh</b> để mở bảng kinh. Chọn bài, chọn chế độ lồng tiếng hoặc tự đọc. Gõ vào mõ (hoặc nút
+            🪵) để tụng từng câu và tích lũy công đức.</p>
+        </section>
+        <section class="htp-section">
+          <h4>🪷 Thả đèn nguyện</h4>
+          <p>Nhấn <b>Đèn nguyện</b> để viết lời ước và thả hoa đăng xuống Hồ Sen. Đèn sẽ hiện trên mặt nước trong buổi
+            tu.</p>
+        </section>
+        <section class="htp-section">
+          <h4>⭐ Công đức &amp; Cấp bậc</h4>
+          <p>Mỗi hành động (tụng kinh, gõ mõ, thỉnh chuông, lễ Phật…) tặng công đức. Tích đủ công đức để thăng cấp từ
+            <b>Khách Hành Hương</b> lên <b>Bồ Tát Đạo</b>.
+          </p>
+        </section>
+        <section class="htp-section">
+          <h4>📋 Nhiệm vụ ngày</h4>
+          <p>Mỗi ngày có nhiệm vụ nhỏ như gõ 30 tiếng mõ hay hoàn thành 1 bài kinh. Hoàn thành tất cả để nhận hào quang
+            thưởng!</p>
+        </section>
+      </div>
+      <button class="btn-save htp-close-btn" id="btnHowToPlayDone">Đã hiểu, vào chùa!</button>
+    </div>
+  </div>
+
+  <!-- TRÀNG HẠT 108 HẠT (A4) -->
+  <div id="beadModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="beadTitle">
+    <div class="bead-card">
+      <div class="card-header">
+        <div class="header-title">
+          <span class="gold-icon">📿</span>
+          <div>
+            <h3 id="beadTitle">Tràng hạt</h3>
+            <small id="beadSubtitle">Lần chuỗi 108 hạt để tâm được an định</small>
+          </div>
+        </div>
+        <button class="btn-close-modal" id="btnCloseBead" aria-label="Đóng">✕</button>
+      </div>
+
+      <div class="bead-body">
+        <p class="bead-counter"><b id="beadCount">0</b> / <span id="beadTotal">108</span> hạt</p>
+        <div id="beadTrack" class="bead-track" role="group" aria-label="Các hạt trên tràng"></div>
+        <p id="beadHint" class="bead-hint">Nhấn vào hạt kế tiếp để lần chuỗi</p>
+      </div>
+
+      <div class="bead-actions">
+        <button id="btnResetBead" class="btn-ghost">Lần lại từ đầu</button>
+        <button id="btnNextBead" class="btn-save">Lần một hạt</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- A5 — DÂNG LỄ TẠI CHÁNH ĐIỆN -->
+  <div id="offeringModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="offeringTitle">
+    <div class="offering-card">
+      <div class="card-header">
+        <div class="header-title">
+          <span class="gold-icon">🪷</span>
+          <div>
+            <h3 id="offeringTitle">Dâng lễ Chánh Điện</h3>
+            <small id="offeringSubtitle">Thành tâm chọn lễ vật dâng lên Tam Bảo</small>
+          </div>
+        </div>
+        <button class="btn-close-modal" id="btnCloseOffering" aria-label="Đóng">✕</button>
+      </div>
+
+      <div class="offering-body">
+        <div id="offeringList" class="offering-list" role="group" aria-label="Chọn lễ vật"></div>
+        <p id="offeringHint" class="offering-hint">Chọn ít nhất một lễ vật rồi nhấn Dâng lễ</p>
+        <p class="offering-quota">Hôm nay đã dâng <b id="offeringCount">0</b> / <span id="offeringLimit">3</span> lần
+        </p>
+      </div>
+
+      <div class="offering-actions">
+        <button id="btnClearOffering" class="btn-ghost">Chọn lại</button>
+        <button id="btnSubmitOffering" class="btn-save">Dâng lễ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- A6 — XIN XĂM (RÚT QUẺ OFFLINE) -->
+  <div id="fortuneModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="fortuneTitle">
+    <div class="fortune-card">
+      <div class="card-header">
+        <div class="header-title">
+          <span class="gold-icon">🎋</span>
+          <div>
+            <h3 id="fortuneTitle">Xin xăm</h3>
+            <small id="fortuneSubtitle">Mỗi ngày một quẻ · lòng thành ắt ứng</small>
+          </div>
+        </div>
+        <button class="btn-close-modal" id="btnCloseFortune" aria-label="Đóng">✕</button>
+      </div>
+
+      <div class="fortune-body">
+        <div id="fortuneTube" class="fortune-tube" aria-hidden="true">
+          <span>🎋</span>
+        </div>
+
+        <div id="fortuneResult" class="fortune-result hidden">
+          <div class="fortune-number">Quẻ số <b id="fortuneNo">1</b></div>
+          <h4 id="fortuneName" class="fortune-name">Quẻ</h4>
+          <p id="fortuneLevel" class="fortune-level">Điềm</p>
+          <p id="fortuneText" class="fortune-text"></p>
+          <p id="fortuneAdvice" class="fortune-advice"></p>
+        </div>
+
+        <p id="fortuneHint" class="fortune-hint">Nhấn "Rút quẻ" để xin một quẻ cho hôm nay</p>
+      </div>
+
+      <div class="fortune-actions">
+        <button id="btnDrawFortune" class="btn-save">Rút quẻ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- A8 — CHỤP ẢNH & CHIA SẺ KHUÔN VIÊN -->
+  <div id="shotModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="shotTitle">
+    <div class="shot-card">
+      <div class="card-header">
+        <div class="header-title">
+          <span class="gold-icon">📷</span>
+          <div>
+            <h3 id="shotTitle">Ảnh khuôn viên</h3>
+            <small id="shotSubtitle">Lưu lại khoảnh khắc tĩnh tâm</small>
+          </div>
+        </div>
+        <button class="btn-close-modal" id="btnCloseShot" aria-label="Đóng">✕</button>
+      </div>
+
+      <div class="shot-body">
+        <img id="shotPreview" class="shot-preview" alt="Ảnh chụp khuôn viên chùa" />
+        <p id="shotHint" class="shot-hint">Nhấn "Chụp" để lưu lại khung cảnh hiện tại</p>
+      </div>
+
+      <div class="shot-actions">
+        <button id="btnTakeShot" class="btn-save">Chụp</button>
+        <button id="btnShareShot" class="btn-ghost" disabled>Tải ảnh về</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- A10 — BẢN ĐỒ KHUÔN VIÊN CHÙA -->
+  <div id="mapModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="mapTitle">
+    <div class="map-card">
+      <div class="card-header">
+        <div class="header-title">
+          <span class="gold-icon">🗺️</span>
+          <div>
+            <h3 id="mapTitle">Bản đồ chùa</h3>
+            <small id="mapSubtitle">Nhấn một địa điểm để đi tới</small>
+          </div>
+        </div>
+        <button class="btn-close-modal" id="btnCloseMap" aria-label="Đóng">✕</button>
+      </div>
+
+      <div class="map-body">
+        <div id="mapCanvas" class="map-canvas" aria-label="Sơ đồ khuôn viên chùa"></div>
+        <p id="mapLegend" class="map-legend">Bạn đang ở: Cổng chùa</p>
+      </div>
     </div>
   </div>
 

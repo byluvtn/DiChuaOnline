@@ -127,6 +127,48 @@ body {
   color: #cca885;
 }
 
+/* A1 — gợi ý công đức còn lại tới cấp kế */
+.xp-next-hint {
+  display: block;
+  font-size: 10px;
+  color: #b08d6a;
+  margin-top: 1px;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+.xp-next-hint.maxed {
+  color: var(--gold-glow);
+  font-weight: 700;
+}
+
+/* Thanh tiến trình cấp độ trong thẻ người chơi */
+.xp-bar-wrap {
+  position: relative;
+  width: 78px;
+  height: 4px;
+  margin-top: 4px;
+  border-radius: 999px;
+  background: rgba(255, 211, 117, 0.16);
+  box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.xp-bar-fill {
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #b8862f 0%, var(--gold-glow) 60%, #ffe9b8 100%);
+  box-shadow: 0 0 6px rgba(255, 211, 117, 0.55);
+  transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (max-width: 380px) {
+  .xp-bar-wrap {
+    width: 60px;
+  }
+}
+
 /* Trạng thái chùa & Số người online */
 .temple-status {
   text-align: center;
@@ -264,6 +306,115 @@ body {
 }
 
 /* ========================================================
+   A10b — MINIMAP TRÒN GÓC TRÊN TRÁI
+   Vòng tròn canvas 2D phản chiếu khuôn viên, bấm để mở bản đồ lớn
+   ======================================================== */
+.minimap-hud {
+  /* Nằm ngoài luồng flex để không bóp layout của #ui.
+     Toạ độ tính từ padding box của #ui nên top/left đã nằm sau safe-area.
+     `top` dưới đây chỉ là giá trị dự phòng: app.js đo chiều cao thật của
+     #topbar + #quickNav rồi ghi đè bằng inline style (positionMinimapHud). */
+  position: absolute;
+  top: 96px;
+  left: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  opacity: 0;
+  transform: scale(0.9);
+  transform-origin: top left;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  pointer-events: none;
+}
+
+.minimap-hud.hidden {
+  display: none;
+}
+
+.minimap-hud.ready {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.minimap-ring {
+  position: relative;
+  display: block;
+  width: 112px;
+  height: 112px;
+  padding: 0;
+  border: 2px solid rgba(245, 199, 108, 0.5);
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 38%, rgba(40, 23, 14, 0.92), rgba(9, 5, 3, 0.96));
+  box-shadow:
+    0 0 0 3px rgba(9, 5, 3, 0.55),
+    0 0 16px rgba(255, 190, 100, 0.2),
+    inset 0 0 22px rgba(0, 0, 0, 0.72);
+  cursor: pointer;
+  overflow: hidden;
+  pointer-events: auto;
+  transition: transform 0.15s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.minimap-ring::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 226, 153, 0.16);
+  pointer-events: none;
+}
+
+.minimap-ring:hover,
+.minimap-ring:focus-visible {
+  border-color: var(--gold);
+  box-shadow:
+    0 0 0 3px rgba(9, 5, 3, 0.55),
+    0 0 24px rgba(255, 200, 110, 0.34),
+    inset 0 0 22px rgba(0, 0, 0, 0.72);
+  outline: none;
+}
+
+.minimap-ring:active {
+  transform: scale(0.95);
+}
+
+.minimap-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.minimap-label {
+  padding: 1px 9px;
+  border: 1px solid rgba(245, 199, 108, 0.2);
+  border-radius: 999px;
+  background: rgba(18, 10, 7, 0.72);
+  color: rgba(252, 239, 220, 0.82);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+}
+
+@media (max-width: 600px) {
+  .minimap-ring {
+    width: 88px;
+    height: 88px;
+  }
+
+  .minimap-label {
+    font-size: 8px;
+    padding: 1px 7px;
+  }
+}
+
+/* ========================================================
    PROMPT GỢI Ý TƯƠNG TÁC KHU VỰC
    ======================================================== */
 .zone-prompt {
@@ -362,13 +513,48 @@ body {
   color: #cca482;
 }
 
-.btn-close-prayer {
+.prayer-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 8px;
+}
+
+.btn-close-prayer,
+.btn-collapse-prayer {
   background: transparent;
   border: none;
   color: #cca482;
   font-size: 16px;
+  line-height: 1;
   cursor: pointer;
   padding: 4px 8px;
+  border-radius: 8px;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.25s ease;
+}
+
+.btn-close-prayer:hover,
+.btn-collapse-prayer:hover {
+  background: rgba(245, 199, 108, 0.12);
+  color: var(--gold-glow);
+}
+
+/* A11 — thu gọn bảng tụng: giữ lại thanh tiêu đề, ẩn phần thân */
+.prayer-box.collapsed .sutra-tabs,
+.prayer-box.collapsed .voice-mode-selector,
+.prayer-box.collapsed .prayer-body,
+.prayer-box.collapsed .prayer-controls {
+  display: none;
+}
+
+.prayer-box.collapsed .prayer-header {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.prayer-box.collapsed .btn-collapse-prayer {
+  transform: rotate(180deg);
 }
 
 /* Tabs chọn kinh */
@@ -1072,6 +1258,192 @@ body {
   transform: translateX(-50%) translateY(0);
 }
 
+/* ========================================================
+   A3 — MODAL NHIỆM VỤ NGÀY
+   ======================================================== */
+.quest-card,
+.howtoplay-card,
+.bead-card,
+.offering-card,
+.fortune-card,
+.shot-card,
+.map-card {
+  width: 100%;
+  max-width: 460px;
+  max-height: 86vh;
+  background: #1c110a;
+  border: 1px solid rgba(245, 199, 108, 0.35);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+}
+
+.quest-list {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.quest-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 235, 200, 0.04);
+  border: 1px solid rgba(245, 199, 108, 0.12);
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.quest-item.done {
+  background: rgba(120, 220, 140, 0.09);
+  border-color: rgba(120, 220, 140, 0.35);
+}
+
+.quest-check {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  background: rgba(245, 199, 108, 0.1);
+  border: 1px solid rgba(245, 199, 108, 0.3);
+  color: rgba(255, 235, 205, 0.5);
+}
+
+.quest-item.done .quest-check {
+  background: rgba(120, 220, 140, 0.25);
+  border-color: rgba(120, 220, 140, 0.6);
+  color: #b6f0c2;
+}
+
+.quest-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.quest-name {
+  font-size: 13px;
+  color: #ffe9c9;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.quest-reward {
+  font-size: 10.5px;
+  color: #c19a72;
+  margin-top: 2px;
+}
+
+.quest-progress {
+  flex: 0 0 auto;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold-glow);
+  font-weight: 700;
+}
+
+.quest-item.done .quest-progress {
+  color: #9be8ad;
+}
+
+.quest-claim-area {
+  padding: 10px 14px 16px;
+  border-top: 1px solid rgba(245, 199, 108, 0.15);
+  text-align: center;
+}
+
+.quest-claim-area.hidden {
+  display: none;
+}
+
+.quest-claim-msg {
+  font-size: 12.5px;
+  color: #ffe9c9;
+  margin: 0 0 10px;
+  line-height: 1.4;
+}
+
+/* ========================================================
+   A7 — MODAL CÁCH CHƠI
+   ======================================================== */
+.howtoplay-body {
+  padding: 12px 16px 6px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.htp-section {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(245, 199, 108, 0.08);
+}
+
+.htp-section:last-child {
+  border-bottom: none;
+}
+
+.htp-section h4 {
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: var(--gold-glow);
+  font-weight: 700;
+}
+
+.htp-section p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(255, 235, 205, 0.78);
+}
+
+.htp-section b {
+  color: #ffe9c9;
+}
+
+.htp-close-btn {
+  margin: 10px 16px 16px;
+  flex: 0 0 auto;
+}
+
+/* ========================================================
+   A2 — BỘ ĐẾM TIẾNG MÕ TRONG NGÀY
+   ======================================================== */
+.tap-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #e6c79a;
+  background: rgba(255, 220, 160, 0.08);
+  border: 1px solid rgba(245, 199, 108, 0.22);
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tap-counter b {
+  color: var(--gold-glow);
+  font-weight: 700;
+}
+
+.tap-counter.complete {
+  color: #9be8ad;
+  background: rgba(120, 220, 140, 0.12);
+  border-color: rgba(120, 220, 140, 0.45);
+}
+
 /* Responsive tinh chỉnh */
 @media (max-width: 600px) {
   .pill-btn .btn-text {
@@ -1096,4 +1468,702 @@ body {
   .line-current {
     font-size: 17px;
   }
+}
+
+/* ========================================================
+   A4 — TRÀNG HẠT 108 HẠT
+   ======================================================== */
+.bead-body {
+  padding: 14px 16px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.bead-counter {
+  margin: 0;
+  text-align: center;
+  font-size: 16px;
+  letter-spacing: 0.4px;
+  color: #f3e2c4;
+}
+
+.bead-counter b {
+  color: var(--gold-glow);
+  font-size: 21px;
+}
+
+.bead-track {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 6px;
+  justify-items: center;
+  padding: 6px 2px;
+}
+
+.bead-dot {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-width: 22px;
+  padding: 0;
+  border: 1px solid rgba(245, 199, 108, 0.3);
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, #3b2a1c, #1f150d);
+  cursor: pointer;
+  transition: transform 0.15s, background 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.bead-dot:active {
+  transform: scale(0.88);
+}
+
+.bead-dot.done {
+  background: radial-gradient(circle at 34% 28%, #ffd993, var(--gold-glow, #f5c76c));
+  border-color: rgba(255, 228, 170, 0.9);
+  box-shadow: 0 0 8px rgba(245, 199, 108, 0.55);
+}
+
+.bead-dot.next {
+  border-color: #ffe9b8;
+  box-shadow: 0 0 0 2px rgba(245, 199, 108, 0.35);
+  animation: beadPulse 1.6s ease-in-out infinite;
+}
+
+.bead-dot:disabled {
+  cursor: default;
+}
+
+@keyframes beadPulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px rgba(245, 199, 108, 0.25);
+  }
+
+  50% {
+    box-shadow: 0 0 0 5px rgba(245, 199, 108, 0.08);
+  }
+}
+
+.bead-hint {
+  margin: 0;
+  text-align: center;
+  font-size: 12px;
+  color: #a08c74;
+  min-height: 16px;
+}
+
+.bead-hint.complete {
+  color: #9be8ad;
+}
+
+.bead-actions {
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px 16px;
+}
+
+.btn-ghost {
+  flex: 1;
+  padding: 11px 14px;
+  border-radius: 12px;
+  background: rgba(255, 235, 200, 0.06);
+  border: 1px solid rgba(245, 199, 108, 0.28);
+  color: #f3e2c4;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 235, 200, 0.12);
+  border-color: rgba(245, 199, 108, 0.5);
+}
+
+.btn-ghost:active {
+  background: rgba(255, 235, 200, 0.18);
+}
+
+@media (max-width: 600px) {
+  .bead-track {
+    grid-template-columns: repeat(9, 1fr);
+    gap: 5px;
+  }
+
+  .bead-dot {
+    max-width: 20px;
+  }
+
+  .bead-card {
+    max-height: 80vh;
+  }
+}
+
+/* ========================================================
+   A5 — DÂNG LỄ TẠI CHÁNH ĐIỆN
+   ======================================================== */
+.offering-body {
+  padding: 12px 14px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.offering-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+.offering-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  border-radius: 14px;
+  background: rgba(255, 235, 200, 0.04);
+  border: 1px solid rgba(245, 199, 108, 0.16);
+  color: #f3e2c4;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.offering-item .offering-emoji {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.offering-item .offering-merit {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 235, 205, 0.55);
+}
+
+.offering-item:hover {
+  background: rgba(255, 235, 200, 0.09);
+}
+
+.offering-item.picked {
+  background: rgba(245, 199, 108, 0.18);
+  border-color: rgba(245, 199, 108, 0.65);
+  transform: translateY(-1px);
+}
+
+.offering-item.picked .offering-merit {
+  color: #f5c76c;
+}
+
+.offering-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(255, 235, 205, 0.6);
+  text-align: center;
+}
+
+.offering-quota {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(255, 235, 205, 0.45);
+  text-align: center;
+}
+
+.offering-quota b {
+  color: #f5c76c;
+}
+
+.offering-actions {
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px 14px;
+}
+
+.offering-actions button {
+  flex: 1;
+}
+
+@media (max-width: 600px) {
+  .offering-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .offering-card {
+    max-height: 80vh;
+  }
+}
+
+/* ========================================================
+   A6 — XIN XĂM (RÚT QUẺ OFFLINE)
+   ======================================================== */
+.fortune-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.fortune-tube {
+  width: 76px;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 30%, rgba(245, 199, 108, 0.22), rgba(245, 199, 108, 0.04));
+  border: 1px solid rgba(245, 199, 108, 0.3);
+  transition: transform 0.25s ease;
+}
+
+.fortune-tube.shaking {
+  animation: fortuneShake 0.55s ease-in-out;
+}
+
+@keyframes fortuneShake {
+
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+
+  20% {
+    transform: rotate(-9deg) scale(1.05);
+  }
+
+  40% {
+    transform: rotate(8deg) scale(1.05);
+  }
+
+  60% {
+    transform: rotate(-6deg) scale(1.03);
+  }
+
+  80% {
+    transform: rotate(4deg) scale(1.01);
+  }
+}
+
+.fortune-result {
+  width: 100%;
+  text-align: center;
+  padding: 14px 12px;
+  border-radius: 16px;
+  background: rgba(255, 235, 200, 0.04);
+  border: 1px solid rgba(245, 199, 108, 0.16);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fortune-number {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 235, 205, 0.5);
+}
+
+.fortune-number b {
+  color: #f5c76c;
+  font-size: 14px;
+}
+
+.fortune-name {
+  margin: 0;
+  font-size: 18px;
+  color: #f7e7c8;
+}
+
+.fortune-level {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #f5c76c;
+}
+
+.fortune-text {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.65;
+  color: rgba(255, 235, 205, 0.82);
+}
+
+.fortune-advice {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(255, 235, 205, 0.55);
+  font-style: italic;
+}
+
+.fortune-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(255, 235, 205, 0.5);
+  text-align: center;
+}
+
+.fortune-actions {
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px 14px;
+}
+
+.fortune-actions button {
+  flex: 1;
+}
+
+.fortune-actions .btn-save:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .fortune-card {
+    max-height: 80vh;
+  }
+
+  .fortune-tube {
+    width: 64px;
+    height: 64px;
+    font-size: 28px;
+  }
+}
+
+/* ========================================================
+   A8 — CHỤP ẢNH & CHIA SẺ
+   ======================================================== */
+.shot-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+.shot-preview {
+  width: 100%;
+  max-height: 46vh;
+  object-fit: contain;
+  border-radius: 16px;
+  border: 1px solid rgba(245, 199, 108, 0.28);
+  background: #0b0705;
+  display: block;
+}
+
+.shot-preview:not([src]),
+.shot-preview[src=''] {
+  display: none;
+}
+
+.shot-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(255, 235, 205, 0.55);
+  text-align: center;
+}
+
+.shot-actions {
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px 14px;
+}
+
+.shot-actions button {
+  flex: 1;
+}
+
+.shot-actions .btn-save:disabled,
+.shot-actions .btn-ghost:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .shot-card {
+    max-height: 82vh;
+  }
+
+  .shot-preview {
+    max-height: 42vh;
+  }
+}
+
+/* ========================================================
+   A9 — CÀI VÀO MÀN HÌNH CHÍNH
+   ======================================================== */
+.install-item {
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.install-item.hidden {
+  display: none;
+}
+
+.install-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.install-text small {
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: #b59273;
+}
+
+.btn-install {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  border: 1px solid rgba(245, 199, 108, 0.45);
+  border-radius: 9px;
+  background: linear-gradient(#f5c76c33, #f5c76c14);
+  color: #f7dda6;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-install:hover {
+  border-color: #e2c67e;
+  background: linear-gradient(#f5c76c55, #f5c76c22);
+}
+
+.btn-install:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+/* ========================================================
+   A10 — BẢN ĐỒ KHUÔN VIÊN CHÙA
+   ======================================================== */
+.map-body {
+  padding: 12px 14px 14px;
+  overflow-y: auto;
+}
+
+.map-canvas {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  max-height: 58vh;
+  border: 1px solid rgba(245, 199, 108, 0.28);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(245, 199, 108, 0.1), transparent 62%),
+    linear-gradient(#14231f, #0d1a17);
+  overflow: hidden;
+}
+
+/* Đường trục dọc tượng trưng cho lối đi chính từ cổng lên Chánh Điện */
+.map-canvas::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 8%;
+  bottom: 8%;
+  width: 2px;
+  transform: translateX(-50%);
+  background: linear-gradient(transparent, rgba(245, 199, 108, 0.22), transparent);
+}
+
+.map-canvas::after {
+  content: '';
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  top: 42%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(245, 199, 108, 0.16), transparent);
+}
+
+.map-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 8px;
+  min-width: 58px;
+  border: 1px solid rgba(245, 199, 108, 0.3);
+  border-radius: 12px;
+  background: rgba(20, 32, 28, 0.92);
+  color: #eadbb9;
+  font: inherit;
+  font-size: 9.5px;
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s, transform 0.18s;
+  z-index: 1;
+}
+
+.map-node span {
+  font-size: 19px;
+  line-height: 1;
+}
+
+.map-node:hover {
+  border-color: #e2c67e;
+  background: rgba(38, 55, 47, 0.96);
+  transform: translate(-50%, -50%) scale(1.06);
+}
+
+.map-node.active {
+  border-color: #f5c76c;
+  background: linear-gradient(rgba(245, 199, 108, 0.28), rgba(245, 199, 108, 0.1));
+  color: #fff5dc;
+  box-shadow: 0 0 0 2px rgba(245, 199, 108, 0.22), 0 0 18px rgba(245, 199, 108, 0.28);
+  z-index: 2;
+}
+
+/* Dấu "bạn đang ở đây" trên địa điểm hiện tại */
+.map-node.active::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #6fe0a4;
+  box-shadow: 0 0 8px #6fe0a4;
+  animation: mapPing 1.8s ease-in-out infinite;
+}
+
+@keyframes mapPing {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.45;
+    transform: scale(0.7);
+  }
+}
+
+.map-legend {
+  margin: 10px 0 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: rgba(255, 235, 205, 0.6);
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .map-canvas {
+    max-height: 50vh;
+  }
+
+  .map-node {
+    min-width: 52px;
+    padding: 5px 6px;
+    font-size: 8.5px;
+  }
+
+  .map-node span {
+    font-size: 17px;
+  }
+}
+
+/* ========================================================
+   A11 — THU GỌN / PHÓNG TO CÁC BẢNG
+   ======================================================== */
+/* Thẻ modal ở trạng thái phóng to */
+.quest-card.is-zoomed,
+.howtoplay-card.is-zoomed,
+.bead-card.is-zoomed,
+.offering-card.is-zoomed,
+.fortune-card.is-zoomed,
+.shot-card.is-zoomed,
+.map-card.is-zoomed,
+.lantern-card.is-zoomed {
+  width: 96vw;
+  max-width: 96vw;
+  height: 92vh;
+  max-height: 92vh;
+}
+
+/* Vùng thân cuộn được khi phóng to */
+.quest-card.is-zoomed .quest-list,
+.howtoplay-card.is-zoomed .howtoplay-body,
+.bead-card.is-zoomed .bead-body,
+.offering-card.is-zoomed .offering-body,
+.fortune-card.is-zoomed .fortune-body,
+.shot-card.is-zoomed .shot-body,
+.map-card.is-zoomed .map-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Đèn nguyện: danh sách cuộn giãn hết chiều cao còn lại */
+.lantern-card.is-zoomed .wishes-scroll {
+  flex: 1 1 auto;
+  max-height: none;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.lantern-card.is-zoomed .wish-form {
+  flex: 0 0 auto;
+}
+
+.shot-card.is-zoomed .shot-body img,
+.shot-card.is-zoomed .shot-preview img {
+  max-height: none;
+}
+
+/* Nhóm nút bên phải thanh tiêu đề (phóng to + đóng) */
+.modal-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.btn-zoom-modal {
+  background: transparent;
+  border: none;
+  color: #cca482;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 7px;
+  border-radius: 8px;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.25s ease;
+}
+
+.btn-zoom-modal:hover {
+  background: rgba(245, 199, 108, 0.12);
+  color: var(--gold-glow);
+}
+
+.modal-card-zoomed .btn-zoom-modal,
+.is-zoomed .btn-zoom-modal {
+  color: var(--gold-glow);
+  transform: rotate(180deg);
 }

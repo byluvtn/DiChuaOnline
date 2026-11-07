@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="vi" data-lang="vi">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#120b08">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Chùa Online">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap">
+    <title>Chùa Online - Đi Chùa, Thắp Hương, Niệm Phật, Lạy Phật Online</title>
+<meta name="description" content="Khám phá Chùa Online miễn phí ngay trên trình duyệt. Cùng mọi người đi lễ Phật, thắp hương, niệm Phật, thỉnh chuông, gõ mõ, lần tràng hạt, xin xăm và khám phá không gian chùa Việt.">
+<meta name="keywords" content="chùa online, đi chùa online, game chùa online, đi lễ chùa online, thắp hương online, niệm phật online, lạy phật online, xin xăm online, tụng kinh online">
+<link rel="canonical" href="https://chuaonline.org/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Chùa Online">
+<meta property="og:title" content="Chùa Online - Đi Chùa, Thắp Hương, Niệm Phật, Lạy Phật Online">
+<meta property="og:description" content="Khám phá Chùa Online miễn phí ngay trên trình duyệt. Cùng mọi người đi lễ Phật, thắp hương, niệm Phật, thỉnh chuông, gõ mõ, lần tràng hạt, xin xăm và khám phá không gian chùa Việt.">
+<meta property="og:url" content="https://chuaonline.org/">
+<meta property="og:image" content="https://chuaonline.org/og.jpg?v=2">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="vi">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://chuaonline.org/#org","name":"Chùa Online","url":"https://chuaonline.org/","logo":"https://chuaonline.org/icons/icon-512.png","sameAs":["https://www.facebook.com/chuaonline.org/"]},{"@type":"WebSite","@id":"https://chuaonline.org/#website","name":"Chùa Online","url":"https://chuaonline.org/","inLanguage":"vi","publisher":{"@id":"https://chuaonline.org/#org"}},{"@type":"VideoGame","name":"Chùa Online","description":"Khám phá Chùa Online miễn phí ngay trên trình duyệt. Cùng mọi người đi lễ Phật, thắp hương, niệm Phật, thỉnh chuông, gõ mõ, lần tràng hạt, xin xăm và khám phá không gian chùa Việt.","url":"https://chuaonline.org/","image":"https://chuaonline.org/og.jpg?v=2","inLanguage":"vi","genre":["Simulation","Casual","Multiplayer"],"gamePlatform":["Web browser","Android","iOS"],"applicationCategory":"Game","operatingSystem":"Any","playMode":"MultiPlayer","offers":{"@type":"Offer","price":"0","priceCurrency":"VND"},"publisher":{"@id":"https://chuaonline.org/#org"}}]}</script>
+    <script type="module" crossorigin src="/assets/index-DCvJss7o.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-B56N_8bV.css">
+  </head>
+  <body>
+    <div id="app">
+<header class="top">
+  <a class="brand" href="/"><img src="/favicon.svg" width="34" height="34" alt=""><span>Chùa Online</span></a>
+</header>
+<main class="wrap">
+  <h1>Chùa Online</h1>
+  <p class="lead">Đi chùa online cùng mọi người: thắp hương, thỉnh chuông, lạy Phật, lần tràng hạt</p>
+  <div class="player" id="player">
+    <div class="stageWrap">
+      <div class="stage" id="stage" tabindex="0" role="application" aria-label="Chùa Online"></div>
+      <div class="cover" id="cover">
+        <div class="coverImg"></div>
+        <div class="coverBody">
+          <img class="coverLogo" src="/favicon.svg" width="64" height="64" alt="">
+          <p class="coverName">Chùa Online</p>
+          <button type="button" class="playBtn" id="play"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="7 4 20 12 7 20 7 4"/></svg><span>Chơi ngay</span></button>
+          <p class="coverMsg" id="coverMsg" hidden></p>
+        </div>
+      </div>
+    </div>
+    <div class="bar">
+      <span class="best" title="Kỷ lục"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c2.4 2.9 3.5 5.8 3.5 8.6S14 17.4 12 19.3c-2-1.9-3.5-4.9-3.5-7.7S9.6 5.9 12 3z"/><path d="M4 11.5c3.3 0 6.2 1.6 7.6 3.9.5.9.8 2.4.4 3.9-3 0-5.8-1.5-7.2-3.9-.6-1-.9-2.4-.8-3.9z"/><path d="M20 11.5c-3.3 0-6.2 1.6-7.6 3.9-.5.9-.8 2.4-.4 3.9 3 0 5.8-1.5 7.2-3.9.6-1 .9-2.4.8-3.9z"/></svg><span>Kỷ lục</span><b id="best">-</b></span>
+      <span class="tools">
+        <button type="button" class="tool" id="restart" title="Chơi lại từ đầu" aria-label="Chơi lại từ đầu" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>
+        <button type="button" class="tool" id="music" title="Tắt nhạc nền" aria-label="Tắt nhạc nền"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></button>
+        <button type="button" class="tool" id="mute" title="Tắt tiếng" aria-label="Tắt tiếng"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg></button>
+        <button type="button" class="tool" id="full" title="Toàn màn hình" aria-label="Toàn màn hình"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
+      </span>
+    </div>
+  </div>
+  <section class="card controls"><h2>Cách điều khiển Chùa Online</h2><ul><li><kbd>WASD / mũi tên</kbd><span>Đi lại (giữ Shift để chạy)</span></li><li><kbd>Bấm xuống đất</kbd><span>Đi tới chỗ đó</span></li><li><kbd>Kéo / cuộn</kbd><span>Xoay nhìn, zoom</span></li><li><kbd>E</kbd><span>Dùng điểm gần đó (hương, chuông, xăm...)</span></li><li><kbd>Enter / Space / B / T</kbd><span>Chat / chắp tay / lạy Phật / tràng hạt</span></li><li><kbd>- / +</kbd><span>Zoom xa / zoom gần</span></li><li><kbd>Joystick / chạm</kbd><span>Điện thoại: nửa trái để đi, nửa phải xoay nhìn, chạm đất để đi</span></li></ul></section>
+  <section class="card"><h2>Cách chơi Chùa Online</h2><p>Bạn chọn tiểu nam hay tiểu nữ, màu áo tràng và pháp danh rồi bước qua cổng tam quan ba lối vào sân. Chùa là không gian 3D dùng chung với mọi người đang online: bạn thấy người khác đi lại, sư thầy dạo quanh sân, hai tiểu quét lá, một tiểu đánh chuông và một phật tử đi lễ. Đi bằng WASD hoặc mũi tên, giữ Shift để chạy, hoặc bấm xuống đất để đi tới đó. Kéo chuột để xoay nhìn, cuộn để zoom camera từ 4 đến 24 mét; bản đồ nhỏ hình tròn ở góc cho biết mọi người đang ở đâu.</p><p>Đường lát đá rộng chạy từ cổng qua hồ sen lớn có cầu đá cong và cá koi, giữa tượng Quan Âm trắng cao bên trái và tháp 9 tầng bên phải, dẫn thẳng lên Chánh Điện. Đi tới gần một điểm là có nút vàng nổi lên: bấm E hoặc chạm vào. Lư hương đồng rất lớn trước thềm để thắp hương, gác chuông hai tầng để thỉnh chuông cho cả sân cùng nghe, ống tre cạnh gác trống để xin xăm, hồ sen để thả đèn hoa đăng kèm điều ước, chổi để quét lá rụng. Bậc thềm rộng dẫn vào Chánh Điện ba tầng mái, nơi bạn lạy Phật trước bàn thờ Tam Thế và gõ mõ.</p><p>Bấm Enter để mở chat và nói chuyện với người cùng bản đồ. Dòng màu vàng là tin hệ thống: ai vừa vào chùa, ai thỉnh chuông, ai lên cấp. Nếu không nối được máy chủ, bạn vẫn đi lại và tích công đức trên máy, game tự kết nối lại sau.</p></section><section class="card"><h2>Công đức và cấp tu trong Chùa Online</h2><p>Mỗi việc lành đều có công đức: thắp hương 5 (mỗi phút một lần), thỉnh chuông 3 (mỗi 30 giây), lạy Phật 2, chắp tay 1, mỗi lá quét được 1 (tối đa 30 lá một ngày), thả đèn 3 (tối đa 15 đèn), mỗi 10 tiếng mõ được 1. Lần trọn một vòng 108 hạt được 10. Công đức từ hành động tối đa 150 mỗi ngày; điểm danh (10 cộng 2 cho mỗi ngày chuỗi, tối đa 30) và thưởng nhiệm vụ tính riêng.</p><p>Tổng công đức quyết định cấp tu: Sơ tâm từ 0, Tinh tấn ở 100, Định tâm 500, Từ bi 1.500, Trí huệ 4.000 và An lạc 10.000. Cấp hiện cạnh pháp danh trên đầu nhân vật và trong bảng công đức, nơi liệt kê top 10 cùng hạng của bạn. Tổng công đức cao nhất cũng được lưu làm kỷ lục trên máy này.</p></section><section class="card"><h2>Niệm Phật online với tràng hạt 108 hạt</h2><p>Niệm Phật online trong Chùa Online rất đơn giản: bấm nút Tràng hạt (hoặc phím T) để ngồi xuống bồ đoàn và mở vòng 108 hạt. Mỗi lần chạm một hạt (hoặc bấm phím Space) là một câu niệm, thường là “Nam mô A Di Đà Phật”. Mỗi hạt được 1 công đức, lần trọn 108 hạt được thêm 20 công đức. Bạn có thể niệm Phật một mình hoặc ngồi cùng đại chúng trong Chánh Điện và ngoài sân lễ.</p><p>Muốn tụng kinh online, chọn Tụng kinh: có 5 bài niệm và tụng, đếm từng câu, gõ mõ bằng tay hoặc để mõ tự gõ theo nhịp 40 tới 120. Vào thời khoá sáng (5:00 tới 5:20), trưa (12:00 tới 12:30) và tối (20:00 tới 20:30) giờ Việt Nam, công đức tu tập được nhân đôi; ngày Mùng 1 và Rằm được nhân 1,5.</p><p>Mỗi ngày có các nhiệm vụ như lạy 27 lạy, lần trọn một chuỗi, gõ mõ 108 tiếng, thiền 5 phút, tụng trọn một bài, thắp một nén hương, thỉnh chuông; mỗi tuần có thêm nhiệm vụ lớn hơn. Hoàn thành được nhận Sen, công đức và lễ vật.</p></section><section class="card"><h2>Linh thú, trang phục và xin xăm</h2><p>Mỗi cấp mới mở một linh thú đi theo bạn khắp chùa: mèo chùa ở Tinh tấn, chim sẻ ở Định tâm, thỏ ở Từ bi, rùa ở Trí huệ và hạc ở An lạc. Chọn trong bảng Trang phục, nơi bạn cũng đổi được pháp danh, dáng, màu áo, màu đai và đồ đội đầu. Nón lá mở ở Định tâm, hào quang mở ở Trí huệ.</p><p>Ống xăm cạnh gác trống cho mỗi ngày một trong 60 quẻ tự viết, xin lại trong ngày vẫn ra quẻ đó. Thẻ quẻ có số, bậc (Thượng thượng, Thượng, Trung hoặc Hạ), bài thơ bốn câu và lời giải ngắn cho tổng quát, công việc, tình cảm, sức khỏe. Lời quẻ viết nhẹ nhàng, chỉ để vui.</p></section><section class="card"><h2>Chùa Online chơi trên điện thoại được không?</h2><p>Được. Trên màn cảm ứng, joystick ảo hiện ở chỗ bạn đặt tay trên nửa trái màn hình, nửa phải để xoay camera, hai ngón để zoom, chạm xuống đất để đi tới. Nút gợi ý tại điểm tương tác thành nút chạm lớn, thanh hành động nằm dưới cùng, bản đồ nhỏ nằm dưới hàng nút góc trên phải (chạm để ẩn) và panel nào cũng đóng được bằng nút X. Cảnh 3D tự giảm chi tiết và tắt bóng trên điện thoại cho mượt dù sân chùa rất rộng, giao diện vừa với màn 360 pixel.</p></section>
+</main>
+<footer class="foot">
+  <p>© 2026 Chùa Online · chuaonline.org · <a href="https://www.facebook.com/chuaonline.org/" target="_blank" rel="noopener">Fanpage Facebook</a></p>
+</footer></div>
+  </body>
+</html>

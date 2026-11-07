@@ -81,12 +81,22 @@ def petal_color(u, v, layer):
     return col
 
 
+# Hệ số thu nhỏ hoạ tiết. = 1.0 cho icon thường; < 1.0 cho icon maskable
+# (Android cắt tròn/vuông góc nên hoa sen phải nằm trong vùng an toàn 80%).
+CONTENT_SCALE = 1.0
+
+
 def shade(px, py):
     cx, cy = W / 2, H / 2
 
-    # nền gradient tối
+    # nền gradient tối - luôn phủ kín toàn khung (full-bleed, bắt buộc cho maskable)
     d = min(1.0, math.hypot(px - cx, py - cy) / (W * 0.70))
     r, g, b = mix((66, 30, 16), (10, 5, 4), d)
+
+    # thu nhỏ riêng phần hoạ tiết quanh tâm, nền vẫn phủ kín
+    if CONTENT_SCALE != 1.0:
+        px = cx + (px - cx) / CONTENT_SCALE
+        py = cy + (py - cy) / CONTENT_SCALE
 
     # quầng sáng ấm phía sau hoa
     gd = math.hypot(px - cx, (py - 250) * 0.85) / 200
@@ -134,7 +144,9 @@ def render(size):
     return rows
 
 
-def write_png(path, size):
+def write_png(path, size, content_scale=1.0):
+    global CONTENT_SCALE
+    CONTENT_SCALE = content_scale
     rows = render(size)
     raw = b''.join(b'\x00' + r for r in rows)
 
@@ -155,3 +167,5 @@ if __name__ == '__main__':
     os.makedirs('icons', exist_ok=True)
     write_png('icons/icon-512.png', 512)
     write_png('icons/icon-192.png', 192)
+    # maskable: nền phủ kín khung, hoạ tiết sen thu về 80% để Android cắt không mất hoa
+    write_png('icons/icon-maskable-512.png', 512, content_scale=0.78)

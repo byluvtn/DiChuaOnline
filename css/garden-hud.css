@@ -1,0 +1,557 @@
+/* HUD khuôn viên: giữ vùng giữa màn hình cho cảnh 3D. */
+#topbar {
+    position: absolute;
+    inset: 0 0 auto;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 16px 20px;
+    background: linear-gradient(#08120dd9, transparent);
+}
+
+.user-chip {
+    border-radius: 14px;
+    background: #14251edb;
+    border-color: #c9b47a66;
+}
+
+.user-badge {
+    background: linear-gradient(135deg, #ffe2a0, #b99146);
+    color: #49351c;
+}
+
+.temple-status {
+    text-align: left;
+    align-self: center;
+}
+
+.temple-name {
+    font-size: 16px;
+}
+
+.online-indicator {
+    justify-content: flex-start;
+    gap: 5px;
+    color: #c1cdbb;
+    font-size: 11px;
+}
+
+.online-indicator .dot-live {
+    background: #b7ad88;
+    box-shadow: none;
+    animation: none;
+}
+
+.top-actions {
+    margin-left: auto;
+}
+
+.pill-btn {
+    border-radius: 12px;
+    background: #12221fd9;
+    border-color: #c8bd8c55;
+}
+
+#quickNav {
+    position: absolute;
+    top: 91px;
+    left: 20px;
+    max-width: calc(100vw - 410px);
+    justify-content: flex-start;
+    margin: 0;
+    padding: 0;
+    flex-wrap: wrap;
+}
+
+.nav-chip {
+    font-size: 11px;
+    padding: 7px 11px;
+    background: #12251fd9;
+}
+
+#lanternModal {
+    inset: 90px 20px auto auto;
+    width: 330px;
+    height: auto;
+    max-height: calc(100dvh - 235px);
+    padding: 0;
+    background: transparent;
+    backdrop-filter: none;
+    align-items: stretch;
+    z-index: 25;
+    border-radius: 18px;
+}
+
+#lanternModal .lantern-card {
+    width: 100%;
+    max-height: inherit;
+    background: linear-gradient(145deg, #172b26ed, #0d1a17f2);
+    border: 1px solid #bfa56b77;
+    border-radius: 18px;
+    box-shadow: 0 14px 40px #0007;
+    overflow: hidden;
+}
+
+#lanternModal .card-header {
+    padding: 16px;
+}
+
+#lanternModal .card-header h3 {
+    font-size: 18px;
+}
+
+#lanternModal .header-title small {
+    font-size: 10px;
+    color: #bcc7b2;
+}
+
+#lanternModal .modal-tabs {
+    padding: 0 14px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#lanternModal .m-tab {
+    flex: none;
+    font-size: 12px;
+}
+
+.source-link {
+    color: #e6cf92;
+    font-size: 11px;
+    text-decoration: none;
+}
+
+#wishesList {
+    min-height: 105px;
+    max-height: 260px;
+    overflow-y: auto;
+    padding: 12px 14px;
+}
+
+.wish-item {
+    background: #ffffff06;
+    border-color: #d3b87525;
+    padding: 12px;
+}
+
+.wish-author {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 11px;
+    margin-bottom: 7px;
+    color: #efd6a1;
+}
+
+.wish-time {
+    color: #a0ae9d;
+    font-size: 10px;
+}
+
+.wish-text {
+    color: #e2e6d6;
+    font-size: 12px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.empty-wishes {
+    text-align: center;
+    color: #b9c4b0;
+    font-size: 12px;
+    line-height: 1.7;
+    padding: 12px 8px;
+}
+
+#lanternModal .wish-form {
+    padding: 12px 14px 14px;
+}
+
+#inpWishText {
+    background: #071712;
+    font-size: 11px;
+}
+
+.local-data-note {
+    color: #afbaa6;
+    font-size: 10px;
+    line-height: 1.5;
+    margin: 0 0 10px;
+}
+
+.btn-submit-wish {
+    background: linear-gradient(120deg, #f5d693, #bda060);
+    font-size: 12px;
+}
+
+.community-note {
+    position: absolute;
+    left: 20px;
+    bottom: 108px;
+    width: 290px;
+    padding: 14px 16px;
+    background: #10231dcc;
+    border: 1px solid #cdb67a44;
+    border-radius: 14px;
+    box-shadow: 0 8px 28px #0003;
+}
+
+.community-note b {
+    color: #eddbab;
+    font-size: 13px;
+}
+
+.community-note p {
+    font-size: 12px;
+    color: #d8e0cf;
+    margin: 8px 0;
+}
+
+.community-note small {
+    display: block;
+    color: #a7b7a3;
+    font-size: 10px;
+    line-height: 1.6;
+}
+
+.community-note a {
+    display: block;
+    margin-top: 9px;
+    font-size: 11px;
+    color: #e6ce91;
+    text-decoration: none;
+}
+
+.utility-dock,
+.devotion-dock {
+    position: absolute;
+    bottom: max(20px, env(safe-area-inset-bottom));
+    display: flex;
+    gap: 7px;
+    padding: 8px;
+    border: 1px solid #bda16866;
+    border-radius: 17px;
+    background: #10201de6;
+    box-shadow: 0 8px 26px #0006;
+}
+
+.utility-dock {
+    left: 20px;
+}
+
+.devotion-dock {
+    right: 20px;
+}
+
+.utility-dock button,
+.devotion-dock button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 66px;
+    min-height: 58px;
+    background: linear-gradient(#ffffff0a, #ffffff02);
+    border: 1px solid #d7c28c25;
+    border-radius: 11px;
+    color: #eadbb9;
+    font: inherit;
+    font-size: 10px;
+    cursor: pointer;
+}
+
+.utility-dock button:hover,
+.devotion-dock button:hover {
+    background: #dfc37a25;
+    border-color: #e2c67e;
+    transform: translateY(-2px);
+}
+
+.utility-dock span,
+.devotion-dock span {
+    font-size: 23px;
+}
+
+.bottom-bar {
+    position: absolute;
+    bottom: 112px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0;
+    pointer-events: none !important;
+}
+
+.move-hint {
+    font-size: 10px;
+    background: #071711a8;
+    padding: 7px 12px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+.joystick-zone {
+    display: none;
+}
+
+#zonePrompt {
+    position: absolute;
+    top: 144px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: min(430px, calc(100vw - 40px));
+    margin: 0;
+}
+
+#prayerSection {
+    position: absolute;
+    left: 50%;
+    bottom: 110px;
+    transform: translateX(-50%);
+    margin: 0;
+    width: min(540px, calc(100vw - 40px));
+    max-height: calc(100dvh - 210px);
+    overflow-y: auto;
+    background: #11251bf5;
+    border-radius: 18px;
+    z-index: 35;
+}
+
+.character-card {
+    width: min(360px, calc(100vw - 32px));
+    padding: 20px;
+    border-radius: 25px;
+    background: #fff5df;
+    color: #675039;
+    box-shadow: 0 30px 80px #0008;
+}
+
+.character-card header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.character-card h2 {
+    margin: 0;
+    font-size: 19px;
+}
+
+.character-card .btn-close-modal {
+    color: #786149;
+}
+
+#characterPreview {
+    display: block;
+    width: 100%;
+    height: 330px;
+    border-radius: 18px;
+    margin: 12px 0;
+}
+
+.character-card p {
+    text-align: center;
+    font-weight: 700;
+    margin: 8px 0;
+}
+
+.character-card small {
+    display: block;
+    text-align: center;
+    color: #987f60;
+    font-size: 11px;
+}
+
+button:focus-visible,
+a:focus-visible {
+    outline: 2px solid #ffe3a3;
+    outline-offset: 3px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+@media (max-width: 1050px) {
+    .pill-btn .btn-text {
+        display: none;
+    }
+
+    .devotion-dock button {
+        width: 54px;
+    }
+
+    .community-note {
+        width: 245px;
+    }
+
+    #zonePrompt {
+        left: 20px;
+        transform: none;
+        top: 148px;
+        max-width: calc(100vw - 390px);
+    }
+
+    .move-hint {
+        display: none;
+    }
+}
+
+@media (max-width: 700px) {
+    #topbar {
+        padding: 10px;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .user-chip {
+        padding: 6px 9px;
+    }
+
+    .user-meta b {
+        font-size: 11px;
+    }
+
+    .user-meta span {
+        font-size: 9px;
+    }
+
+    .temple-name {
+        font-size: 12px;
+    }
+
+    .online-indicator {
+        font-size: 8px;
+    }
+
+    .top-actions {
+        position: fixed;
+        right: 10px;
+        top: 76px;
+        gap: 5px;
+    }
+
+    .pill-btn {
+        padding: 8px;
+    }
+
+    #quickNav {
+        top: 76px;
+        left: 10px;
+        max-width: calc(100vw - 190px);
+        gap: 4px;
+    }
+
+    .nav-chip {
+        font-size: 0;
+        padding: 8px;
+    }
+
+    .nav-chip i {
+        font-size: 16px;
+    }
+
+    #lanternModal {
+        inset: 125px 10px auto auto;
+        width: min(290px, calc(100vw - 20px));
+        max-height: calc(100dvh - 265px);
+    }
+
+    #wishesList {
+        max-height: 150px;
+        min-height: 65px;
+    }
+
+    .community-note {
+        display: none;
+    }
+
+    .utility-dock {
+        left: 10px;
+        bottom: 91px;
+        padding: 5px;
+        gap: 4px;
+    }
+
+    .utility-dock button {
+        width: 44px;
+        min-height: 45px;
+        font-size: 8px;
+    }
+
+    .utility-dock span {
+        font-size: 19px;
+    }
+
+    .devotion-dock {
+        left: 10px;
+        right: 10px;
+        bottom: max(10px, env(safe-area-inset-bottom));
+        justify-content: space-between;
+        padding: 6px;
+        gap: 4px;
+    }
+
+    .devotion-dock button {
+        flex: 1;
+        width: auto;
+        min-width: 0;
+        min-height: 54px;
+        font-size: 8px;
+    }
+
+    .devotion-dock span {
+        font-size: 21px;
+    }
+
+    #zonePrompt {
+        top: 125px;
+        left: 10px;
+        max-width: calc(100vw - 20px);
+        z-index: 20;
+    }
+
+    #zonePrompt:has(~ #prayerSection:not(.hidden)) {
+        display: none;
+    }
+
+    #prayerSection {
+        bottom: 155px;
+        width: calc(100vw - 20px);
+        max-height: calc(100dvh - 235px);
+    }
+}
+
+@media (pointer: coarse) {
+    .bottom-bar {
+        left: 20px;
+        bottom: 155px;
+        transform: none;
+    }
+
+    .joystick-zone {
+        display: block;
+        pointer-events: auto;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+/* Ba mẫu nhân vật chibi và điều hướng khuôn viên rộng. */
+.character-card { max-height: calc(100dvh - 24px); overflow-y: auto; }
+.avatar-options { display: flex; gap: 8px; margin: 16px 0; }
+.avatar-options button { flex: 1; padding: 11px 5px; border: 1px solid #c8ae80; border-radius: 12px; background: #f4e6cb; color: #745834; cursor: pointer; font: inherit; font-size: 12px; }
+.avatar-options button.active { background: #ac7735; color: #fff8e8; box-shadow: 0 3px 10px #8d612533; }
+#quickNav { max-width: calc(100vw - 40px); overflow-x: auto; flex-wrap: nowrap; }
+#quickNav button { flex-shrink: 0; }
+@media (max-width: 700px) {
+  #quickNav { max-width: calc(100vw - 190px); }
+  #characterPreview { height: min(330px, 45dvh); }
+}
