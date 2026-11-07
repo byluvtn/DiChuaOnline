@@ -43,6 +43,10 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&family=Noto+Serif:wght@600;700&display=swap"
+    rel="stylesheet" />
   <link rel="stylesheet" href="css/app.css" />
   <link rel="stylesheet" href="css/garden-hud.css" />
 
@@ -133,21 +137,13 @@
 
       <!-- Cụm nút công cụ: Nhạc nền, Thả đèn, Tụng kinh, Cài đặt -->
       <div class="top-actions">
-        <button class="pill-btn" id="btnToggleBgm" title="Bật/Tắt Nhạc nền thiền">
-          <span id="bgmIcon">🎵</span>
-          <span class="btn-text">Nhạc thiền</span>
-        </button>
+        
 
-        <button class="pill-btn highlight" id="btnOpenLantern" title="Đèn nguyện hồ sen">
-          <span>🪷</span>
-          <span class="btn-text">Đèn nguyện</span>
-        </button>
+        
 
-        <button class="pill-btn" id="btnTogglePrayer" title="Bật/Tắt Bảng tụng kinh">
-          <span>📿</span>
-          <span class="btn-text">Tụng kinh</span>
-        </button>
+        
 
+        <button class="pill-btn icon-only" id="btnMore" title="Thêm tính năng"><span>•••</span></button>
         <button class="pill-btn icon-only" id="btnSettings" title="Cài đặt">
           <svg viewBox="0 0 24 24" class="ic">
             <circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8" />
@@ -189,6 +185,22 @@
         <i>🔔</i> Lầu Chuông
       </button>
     </nav>
+
+    <!-- Cụm pill hành động nổi (tối đa 3) -->
+    <div id="actionDock">
+      <button class="pill-btn" id="btnToggleBgm" title="Bật/Tắt Nhạc nền thiền">
+          <span id="bgmIcon">🎵</span>
+          <span class="btn-text">Nhạc thiền</span>
+        </button>
+      <button class="pill-btn highlight" id="btnOpenLantern" title="Đèn nguyện hồ sen">
+          <span>🪷</span>
+          <span class="btn-text">Đèn nguyện</span>
+        </button>
+      <button class="pill-btn" id="btnTogglePrayer" title="Bật/Tắt Bảng tụng kinh">
+          <span>📿</span>
+          <span class="btn-text">Tụng kinh</span>
+        </button>
+    </div>
 
     <!-- Thông báo gợi ý tương tác khi nhân vật lại gần công trình -->
     <div id="zonePrompt" class="zone-prompt hidden">
@@ -317,26 +329,15 @@
       <small>Bản trải nghiệm cục bộ · Nhân vật trong chùa là NPC, không phải người online.</small>
       <a href="https://chuaonline.org" target="_blank" rel="noopener noreferrer">Mở cộng đồng tại chuaonline.org ↗</a>
     </aside>
-    <nav class="utility-dock" aria-label="Công cụ cá nhân">
-      <button id="btnMeditate" title="Đi đến đệm thiền gần nhất"><span>🧘</span>Ngồi thiền</button>
-      <button id="btnCharacter" title="Xem nhân vật"><span>🧑‍🦲</span>Nhân vật</button>
-      <button id="btnDockName" title="Đổi pháp danh"><span>📜</span>Pháp danh</button>
-      <button id="btnDockSettings" title="Cài đặt"><span>⚙️</span>Cài đặt</button>
-      <button id="btnOpenQuest" title="Nhiệm vụ hôm nay"><span>📋</span>Nhiệm vụ</button>
-      <button id="btnHowToPlay" title="Cách chơi"><span>❓</span>Cách chơi</button>
-      <button id="btnOpenBead" title="Tràng hạt 108 hạt"><span>📿</span>Tràng hạt</button>
-      <button id="btnOpenOffering" title="Dâng lễ tại Chánh Điện"><span>🪷</span>Dâng lễ</button>
-      <button id="btnOpenFortune" title="Xin xăm hôm nay"><span>🎋</span>Xin xăm</button>
-      <button id="btnCaptureShot" title="Chụp ảnh khuôn viên chùa"><span>📷</span>Chụp ảnh</button>
-      <button id="btnOpenMap" title="Bản đồ khuôn viên chùa"><span>🗺️</span>Bản đồ</button>
-    </nav>
-    <nav class="devotion-dock" aria-label="Thực hành tại chùa">
-      <button data-devotion="pray"><span>🙏</span>Lễ Phật</button>
-      <button data-devotion="sutra"><span>📖</span>Tụng kinh</button>
-      <button data-devotion="fish"><span>📿</span>Gõ mõ</button>
-      <button data-devotion="bell"><span>🔔</span>Thỉnh chuông</button>
-      <button data-devotion="lantern"><span>🪷</span>Thả đèn</button>
-      <button data-devotion="quanAm"><span>🌸</span>Quán Âm</button>
+    
+    
+      <!-- BottomNav chính — đúng 5 mục (DESIGN.md mục 6) -->
+    <nav id="bottomNav" aria-label="Điều hướng chính">
+      <button data-nav="yard" type="button"><span class="bn-ic">⛩️</span><span>Sân chùa</span></button>
+      <button data-nav="meditate" type="button"><span class="bn-ic">🧘</span><span>Thiền</span></button>
+      <button data-nav="lephat" class="bn-center" type="button" aria-label="Lễ Phật"><span class="bn-fab">🙏</span><span>Lễ Phật</span></button>
+      <button data-nav="kinh" type="button"><span class="bn-ic">📖</span><span>Tụng kinh</span></button>
+      <button data-nav="profile" type="button"><span class="bn-ic">👤</span><span>Cá nhân</span></button>
     </nav>
   </div>
 
@@ -666,6 +667,42 @@
         <div id="mapCanvas" class="map-canvas" aria-label="Sơ đồ khuôn viên chùa"></div>
         <p id="mapLegend" class="map-legend">Bạn đang ở: Cổng chùa</p>
       </div>
+    </div>
+  </div>
+
+    <!-- SHEET "THÊM" — gom utility-dock + devotion-dock (DESIGN.md mục 5-6) -->
+  <div id="moreSheet" class="modal-overlay hidden">
+    <div class="more-card">
+      <div class="card-header">
+        <div class="header-title">
+          <div>
+            <h3>Thêm tính năng</h3>
+            <small>Công cụ cá nhân và thực hành tại chùa</small>
+          </div>
+        </div>
+        <button class="btn-close-modal" id="btnCloseMore">✕</button>
+      </div>
+<nav class="utility-dock" aria-label="Công cụ cá nhân">
+      <button id="btnMeditate" title="Đi đến đệm thiền gần nhất"><span>🧘</span>Ngồi thiền</button>
+      <button id="btnCharacter" title="Xem nhân vật"><span>🧑‍🦲</span>Nhân vật</button>
+      <button id="btnDockName" title="Đổi pháp danh"><span>📜</span>Pháp danh</button>
+      <button id="btnDockSettings" title="Cài đặt"><span>⚙️</span>Cài đặt</button>
+      <button id="btnOpenQuest" title="Nhiệm vụ hôm nay"><span>📋</span>Nhiệm vụ</button>
+      <button id="btnHowToPlay" title="Cách chơi"><span>❓</span>Cách chơi</button>
+      <button id="btnOpenBead" title="Tràng hạt 108 hạt"><span>📿</span>Tràng hạt</button>
+      <button id="btnOpenOffering" title="Dâng lễ tại Chánh Điện"><span>🪷</span>Dâng lễ</button>
+      <button id="btnOpenFortune" title="Xin xăm hôm nay"><span>🎋</span>Xin xăm</button>
+      <button id="btnCaptureShot" title="Chụp ảnh khuôn viên chùa"><span>📷</span>Chụp ảnh</button>
+      <button id="btnOpenMap" title="Bản đồ khuôn viên chùa"><span>🗺️</span>Bản đồ</button>
+    </nav>
+<nav class="devotion-dock" aria-label="Thực hành tại chùa">
+      <button data-devotion="pray"><span>🙏</span>Lễ Phật</button>
+      <button data-devotion="sutra"><span>📖</span>Tụng kinh</button>
+      <button data-devotion="fish"><span>📿</span>Gõ mõ</button>
+      <button data-devotion="bell"><span>🔔</span>Thỉnh chuông</button>
+      <button data-devotion="lantern"><span>🪷</span>Thả đèn</button>
+      <button data-devotion="quanAm"><span>🌸</span>Quán Âm</button>
+    </nav>
     </div>
   </div>
 

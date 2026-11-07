@@ -2272,3 +2272,31 @@ if (document.readyState === 'loading') {
 } else {
   boot();
 }
+
+
+// ===== STAGE 1: BottomNav + Thêm sheet =====
+(() => {
+  const byId = (id) => document.getElementById(id);
+  const nav = byId('bottomNav');
+  const sheet = byId('moreSheet');
+  const go = {
+    yard: () => document.querySelector('.nav-chip[data-loc="entrance"]')?.click(),
+    meditate: () => byId('btnMeditate')?.click(),
+    lephat: () => document.querySelector('[data-devotion="pray"]')?.click(),
+    kinh: () => document.querySelector('[data-devotion="sutra"]')?.click(),
+    profile: () => byId('btnCharacter')?.click(),
+  };
+  nav?.querySelectorAll('button[data-nav]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      go[btn.dataset.nav]?.();
+      if (btn.dataset.nav !== 'lephat') {
+        nav.querySelectorAll('button').forEach((b) => b.classList.toggle('active', b === btn));
+      }
+    });
+  });
+  byId('btnMore')?.addEventListener('click', () => sheet?.classList.remove('hidden'));
+  byId('btnCloseMore')?.addEventListener('click', () => sheet?.classList.add('hidden'));
+  sheet?.addEventListener('click', (e) => {
+    if (e.target === sheet) sheet.classList.add('hidden');
+  });
+})();

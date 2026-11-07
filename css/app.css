@@ -1,13 +1,34 @@
 :root {
-  --gold: #f5c76c;
-  --gold-glow: #ffe299;
-  --gold-dark: #b88328;
-  --cream: #fcefdc;
-  --lotus-pink: #ff7597;
-  --wood: #4d2315;
-  --bg-glass: rgba(22, 14, 10, 0.76);
-  --bg-glass-strong: rgba(18, 10, 7, 0.92);
-  --border-gold: rgba(245, 199, 108, 0.3);
+  /* DESIGN.md mục 2.1 — màu thương hiệu / scene */
+  --lacquer-red: #970006;
+  --lantern: #EF5F29;
+  --gold: #D3AC7E;
+  --gold-deep: #A77B58;
+  --wood: #885634;
+  --wood-dark: #36160C;
+  --floor: #97683E;
+  --panel: #3E2718;
+  --robe-saffron: #E8A020;
+  --robe-brown: #8A5A33;
+  --cream: #F5E7CE;
+  /* DESIGN.md mục 2.2 — màu UI */
+  --bg-app: #1D0F08;
+  --surface: rgba(62, 39, 24, 0.92);
+  --surface-light: #F8EFDD;
+  --text-on-dark: #F5E7CE;
+  --text-on-dark-dim: rgba(245, 231, 206, 0.65);
+  --text-on-light: #3A2415;
+  --accent: #EF5F29;
+  --accent-gold: #D3AC7E;
+  --success: #7FB069;
+  --danger: #C0392B;
+  /* Tên biến cũ — giữ làm alias để không gãy các rule hiện hữu */
+  --gold-glow: #F5E7CE;
+  --gold-dark: #A77B58;
+  --lotus-pink: #EF5F29;
+  --bg-glass: rgba(62, 39, 24, 0.92);
+  --bg-glass-strong: rgba(29, 15, 8, 0.94);
+  --border-gold: rgba(211, 172, 126, 0.35);
   --safe-t: env(safe-area-inset-top, 0px);
   --safe-b: env(safe-area-inset-bottom, 0px);
 }
@@ -25,9 +46,9 @@ body {
 }
 
 body {
-  background: #090504;
+  background: #1D0F08;
   color: var(--cream);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   overflow: hidden;
   overscroll-behavior: none;
   -webkit-user-select: none;
@@ -99,7 +120,7 @@ body {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ffd375, #b87c22);
+  background: linear-gradient(135deg, #D3AC7E, #A77B58);
   color: #2b1504;
   font-weight: 800;
   font-size: 13px;
@@ -158,7 +179,7 @@ body {
   height: 100%;
   width: 0;
   border-radius: inherit;
-  background: linear-gradient(90deg, #b8862f 0%, var(--gold-glow) 60%, #ffe9b8 100%);
+  background: linear-gradient(90deg, #b8862f 0%, var(--gold-glow) 60%, #F5E7CE 100%);
   box-shadow: 0 0 6px rgba(255, 211, 117, 0.55);
   transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -180,7 +201,7 @@ body {
 .temple-name {
   font-size: 14.5px;
   font-weight: 800;
-  color: #ffecc4;
+  color: #F5E7CE;
   letter-spacing: 0.8px;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
 }
@@ -197,9 +218,9 @@ body {
 .dot-live {
   width: 7px;
   height: 7px;
-  background: #39e75f;
+  background: #7FB069;
   border-radius: 50%;
-  box-shadow: 0 0 8px #39e75f;
+  box-shadow: 0 0 8px #7FB069;
   animation: pulseLive 2s infinite ease-in-out;
 }
 
@@ -246,8 +267,8 @@ body {
 }
 
 .pill-btn.highlight {
-  background: linear-gradient(135deg, rgba(255, 117, 151, 0.35), rgba(184, 131, 40, 0.45));
-  border-color: rgba(255, 160, 185, 0.6);
+  background: var(--accent);
+  border-color: transparent;
   color: #fff;
   box-shadow: 0 0 12px rgba(255, 117, 151, 0.25);
 }
@@ -461,8 +482,8 @@ body {
 
 .prompt-btn {
   padding: 5px 12px;
-  background: linear-gradient(135deg, #f5c76c, #c9922e);
-  color: #2b1403;
+  background: linear-gradient(135deg, #D3AC7E, #A77B58);
+  color: #3A2415;
   font-weight: 700;
   font-size: 11.5px;
   border: none;
@@ -510,7 +531,7 @@ body {
 
 .prayer-title-wrap small {
   font-size: 11px;
-  color: #cca482;
+  color: #D3AC7E;
 }
 
 .prayer-actions {
@@ -524,7 +545,7 @@ body {
 .btn-collapse-prayer {
   background: transparent;
   border: none;
-  color: #cca482;
+  color: #D3AC7E;
   font-size: 16px;
   line-height: 1;
   cursor: pointer;
@@ -575,7 +596,7 @@ body {
   border-radius: 999px;
   background: rgba(38, 22, 15, 0.65);
   border: 1px solid rgba(245, 199, 108, 0.18);
-  color: #d1b59c;
+  color: #F5E7CE;
   font-size: 11.5px;
   white-space: nowrap;
   cursor: pointer;
@@ -700,7 +721,7 @@ body {
 .progress-fill {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, #ffc766, #ff7a45);
+  background: linear-gradient(90deg, #D3AC7E, #ff7a45);
   border-radius: 999px;
   transition: width 0.25s ease;
 }
@@ -709,7 +730,7 @@ body {
   display: flex;
   justify-content: space-between;
   font-size: 11px;
-  color: #cca482;
+  color: #D3AC7E;
   margin-top: 4px;
 }
 
@@ -748,7 +769,7 @@ body {
 
 .fish-hint {
   font-size: 9.5px;
-  color: #ffcca0;
+  color: #D3AC7E;
   font-weight: 600;
   margin-top: -2px;
 }
@@ -796,7 +817,7 @@ body {
 }
 
 .toggle-pill input:checked+.slider {
-  background: #b87c22;
+  background: #A77B58;
 }
 
 .toggle-pill input:checked+.slider::after {
@@ -853,7 +874,7 @@ body {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #ffd480, #965b1c);
+  background: radial-gradient(circle at 35% 35%, #D3AC7E, #965b1c);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
   pointer-events: none;
   transform: translate(0px, 0px);
@@ -891,7 +912,7 @@ body {
 .lantern-card {
   width: 100%;
   max-width: 440px;
-  background: #1c110a;
+  background: #3E2718;
   border: 1px solid rgba(245, 199, 108, 0.35);
   border-radius: 20px;
   overflow: hidden;
@@ -906,7 +927,7 @@ body {
   justify-content: space-between;
   padding: 14px 16px;
   border-bottom: 1px solid rgba(245, 199, 108, 0.15);
-  background: #25170f;
+  background: #3E2718;
 }
 
 .header-title {
@@ -933,7 +954,7 @@ body {
 .btn-close-modal {
   background: transparent;
   border: none;
-  color: #cca482;
+  color: #D3AC7E;
   font-size: 18px;
   cursor: pointer;
 }
@@ -972,7 +993,7 @@ body {
 }
 
 .wish-item {
-  background: #271810;
+  background: #3E2718;
   border: 1px solid rgba(245, 199, 108, 0.15);
   border-radius: 12px;
   padding: 10px 12px;
@@ -981,7 +1002,7 @@ body {
 .wish-text {
   font-size: 13.5px;
   font-weight: 600;
-  color: #fff1d6;
+  color: #F5E7CE;
   line-height: 1.35;
   margin-bottom: 6px;
 }
@@ -991,27 +1012,27 @@ body {
   justify-content: space-between;
   align-items: center;
   font-size: 11px;
-  color: #b59273;
+  color: #A77B58;
 }
 
 .wish-likes {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  color: #ff88a3;
+  color: #EF5F29;
   cursor: pointer;
 }
 
 .wish-form {
   padding: 12px 14px;
-  background: #25170f;
+  background: #3E2718;
   border-top: 1px solid rgba(245, 199, 108, 0.15);
 }
 
 .wish-form input {
   width: 100%;
   padding: 10px 14px;
-  background: #170d08;
+  background: #1D0F08;
   border: 1px solid rgba(245, 199, 108, 0.3);
   border-radius: 10px;
   color: #fff;
@@ -1027,8 +1048,8 @@ body {
 .btn-submit-wish {
   width: 100%;
   padding: 11px;
-  background: linear-gradient(135deg, #f5c76c, #c9922e);
-  color: #2b1403;
+  background: linear-gradient(135deg, #D3AC7E, #A77B58);
+  color: #3A2415;
   font-weight: 700;
   font-size: 14px;
   border: none;
@@ -1048,7 +1069,7 @@ body {
 .sheet-card {
   width: 100%;
   max-width: 400px;
-  background: #21130b;
+  background: #3E2718;
   border: 1px solid rgba(245, 199, 108, 0.3);
   border-radius: 18px;
   padding: 20px;
@@ -1062,14 +1083,14 @@ body {
 
 .muted {
   font-size: 12px;
-  color: #b59273;
+  color: #A77B58;
   margin-bottom: 14px;
 }
 
 .name-card input {
   width: 100%;
   padding: 10px 12px;
-  background: #120905;
+  background: #1D0F08;
   border: 1px solid rgba(245, 199, 108, 0.3);
   border-radius: 10px;
   color: #fff;
@@ -1087,7 +1108,7 @@ body {
   padding: 9px;
   background: #3b2416;
   border: none;
-  color: #d1b59c;
+  color: #F5E7CE;
   border-radius: 8px;
   cursor: pointer;
 }
@@ -1095,9 +1116,9 @@ body {
 .btn-save {
   flex: 1;
   padding: 9px;
-  background: linear-gradient(135deg, #f5c76c, #c9922e);
+  background: linear-gradient(135deg, #D3AC7E, #A77B58);
   border: none;
-  color: #2b1403;
+  color: #3A2415;
   font-weight: 700;
   border-radius: 8px;
   cursor: pointer;
@@ -1122,7 +1143,7 @@ body {
 
 .stats-grid small {
   font-size: 10.5px;
-  color: #b59273;
+  color: #A77B58;
 }
 
 .setting-item {
@@ -1152,7 +1173,7 @@ body {
 #bootScreen {
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle at 50% 40%, #30170c 0%, #120905 70%, #050302 100%);
+  background: radial-gradient(circle at 50% 40%, #30170c 0%, #1D0F08 70%, #050302 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1208,8 +1229,8 @@ body {
 .btn-enter {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(135deg, #ffd375, #c9922e);
-  color: #2b1403;
+  background: linear-gradient(135deg, #D3AC7E, #A77B58);
+  color: #3A2415;
   font-weight: 800;
   font-size: 16px;
   border: none;
@@ -1271,7 +1292,7 @@ body {
   width: 100%;
   max-width: 460px;
   max-height: 86vh;
-  background: #1c110a;
+  background: #3E2718;
   border: 1px solid rgba(245, 199, 108, 0.35);
   border-radius: 20px;
   overflow: hidden;
@@ -1332,7 +1353,7 @@ body {
 
 .quest-name {
   font-size: 13px;
-  color: #ffe9c9;
+  color: #F5E7CE;
   font-weight: 600;
   line-height: 1.3;
 }
@@ -1352,7 +1373,7 @@ body {
 }
 
 .quest-item.done .quest-progress {
-  color: #9be8ad;
+  color: #7FB069;
 }
 
 .quest-claim-area {
@@ -1367,7 +1388,7 @@ body {
 
 .quest-claim-msg {
   font-size: 12.5px;
-  color: #ffe9c9;
+  color: #F5E7CE;
   margin: 0 0 10px;
   line-height: 1.4;
 }
@@ -1408,7 +1429,7 @@ body {
 }
 
 .htp-section b {
-  color: #ffe9c9;
+  color: #F5E7CE;
 }
 
 .htp-close-btn {
@@ -1439,7 +1460,7 @@ body {
 }
 
 .tap-counter.complete {
-  color: #9be8ad;
+  color: #7FB069;
   background: rgba(120, 220, 140, 0.12);
   border-color: rgba(120, 220, 140, 0.45);
 }
@@ -1487,7 +1508,7 @@ body {
   text-align: center;
   font-size: 16px;
   letter-spacing: 0.4px;
-  color: #f3e2c4;
+  color: #F5E7CE;
 }
 
 .bead-counter b {
@@ -1520,13 +1541,13 @@ body {
 }
 
 .bead-dot.done {
-  background: radial-gradient(circle at 34% 28%, #ffd993, var(--gold-glow, #f5c76c));
+  background: radial-gradient(circle at 34% 28%, #D3AC7E, var(--gold-glow, #D3AC7E));
   border-color: rgba(255, 228, 170, 0.9);
   box-shadow: 0 0 8px rgba(245, 199, 108, 0.55);
 }
 
 .bead-dot.next {
-  border-color: #ffe9b8;
+  border-color: #F5E7CE;
   box-shadow: 0 0 0 2px rgba(245, 199, 108, 0.35);
   animation: beadPulse 1.6s ease-in-out infinite;
 }
@@ -1556,7 +1577,7 @@ body {
 }
 
 .bead-hint.complete {
-  color: #9be8ad;
+  color: #7FB069;
 }
 
 .bead-actions {
@@ -1571,7 +1592,7 @@ body {
   border-radius: 12px;
   background: rgba(255, 235, 200, 0.06);
   border: 1px solid rgba(245, 199, 108, 0.28);
-  color: #f3e2c4;
+  color: #F5E7CE;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -1629,7 +1650,7 @@ body {
   border-radius: 14px;
   background: rgba(255, 235, 200, 0.04);
   border: 1px solid rgba(245, 199, 108, 0.16);
-  color: #f3e2c4;
+  color: #F5E7CE;
   font-size: 12px;
   font-weight: 600;
   text-align: center;
@@ -1659,7 +1680,7 @@ body {
 }
 
 .offering-item.picked .offering-merit {
-  color: #f5c76c;
+  color: #D3AC7E;
 }
 
 .offering-hint {
@@ -1678,7 +1699,7 @@ body {
 }
 
 .offering-quota b {
-  color: #f5c76c;
+  color: #D3AC7E;
 }
 
 .offering-actions {
@@ -1775,7 +1796,7 @@ body {
 }
 
 .fortune-number b {
-  color: #f5c76c;
+  color: #D3AC7E;
   font-size: 14px;
 }
 
@@ -1789,7 +1810,7 @@ body {
   margin: 0;
   font-size: 13px;
   font-weight: 600;
-  color: #f5c76c;
+  color: #D3AC7E;
 }
 
 .fortune-text {
@@ -1926,7 +1947,7 @@ body {
 .install-text small {
   font-size: 10.5px;
   line-height: 1.45;
-  color: #b59273;
+  color: #A77B58;
 }
 
 .btn-install {
@@ -1934,7 +1955,7 @@ body {
   padding: 7px 14px;
   border: 1px solid rgba(245, 199, 108, 0.45);
   border-radius: 9px;
-  background: linear-gradient(#f5c76c33, #f5c76c14);
+  background: linear-gradient(#D3AC7E33, #D3AC7E14);
   color: #f7dda6;
   font: inherit;
   font-size: 12px;
@@ -1944,8 +1965,8 @@ body {
 }
 
 .btn-install:hover {
-  border-color: #e2c67e;
-  background: linear-gradient(#f5c76c55, #f5c76c22);
+  border-color: #D3AC7E;
+  background: linear-gradient(#D3AC7E55, #D3AC7E22);
 }
 
 .btn-install:disabled {
@@ -1970,7 +1991,7 @@ body {
   border-radius: 16px;
   background:
     radial-gradient(circle at 50% 42%, rgba(245, 199, 108, 0.1), transparent 62%),
-    linear-gradient(#14231f, #0d1a17);
+    linear-gradient(#36160C, #1D0F08);
   overflow: hidden;
 }
 
@@ -2024,15 +2045,15 @@ body {
 }
 
 .map-node:hover {
-  border-color: #e2c67e;
+  border-color: #D3AC7E;
   background: rgba(38, 55, 47, 0.96);
   transform: translate(-50%, -50%) scale(1.06);
 }
 
 .map-node.active {
-  border-color: #f5c76c;
+  border-color: #D3AC7E;
   background: linear-gradient(rgba(245, 199, 108, 0.28), rgba(245, 199, 108, 0.1));
-  color: #fff5dc;
+  color: #F5E7CE;
   box-shadow: 0 0 0 2px rgba(245, 199, 108, 0.22), 0 0 18px rgba(245, 199, 108, 0.28);
   z-index: 2;
 }
@@ -2046,8 +2067,8 @@ body {
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #6fe0a4;
-  box-shadow: 0 0 8px #6fe0a4;
+  background: #7FB069;
+  box-shadow: 0 0 8px #7FB069;
   animation: mapPing 1.8s ease-in-out infinite;
 }
 
@@ -2148,7 +2169,7 @@ body {
 .btn-zoom-modal {
   background: transparent;
   border: none;
-  color: #cca482;
+  color: #D3AC7E;
   font-size: 15px;
   line-height: 1;
   cursor: pointer;
@@ -2166,4 +2187,169 @@ body {
 .is-zoomed .btn-zoom-modal {
   color: var(--gold-glow);
   transform: rotate(180deg);
+}
+
+/* ============================================================
+   STAGE 1 — DESIGN.md: TopBar mỏng trong suốt, pill hành động,
+   BottomNav 5 mục, bottom sheet, vùng chạm >= 44px
+   ============================================================ */
+#ui {
+  padding-bottom: calc(64px + var(--safe-b) + 8px);
+}
+
+#topbar {
+  flex-wrap: nowrap;
+  min-height: 56px;
+  background: linear-gradient(rgba(29, 15, 8, 0.75), rgba(29, 15, 8, 0));
+  border-radius: 0 0 16px 16px;
+  padding: 4px 4px 12px;
+}
+
+.temple-name {
+  font-family: 'Noto Serif', serif;
+}
+
+.user-chip {
+  min-height: 44px;
+}
+
+.pill-btn {
+  min-height: 44px;
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--surface);
+  border: 1px solid var(--border-gold);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+#actionDock {
+  position: absolute;
+  right: 12px;
+  top: 136px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+  z-index: 30;
+}
+
+#actionDock .pill-btn {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+#bottomNav {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(64px + var(--safe-b));
+  padding-bottom: var(--safe-b);
+  background: var(--surface);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-top: 1px solid var(--border-gold);
+  display: flex;
+  align-items: stretch;
+  z-index: 40;
+}
+
+#bottomNav button {
+  flex: 1 1 0;
+  min-height: 44px;
+  background: none;
+  border: none;
+  color: var(--text-on-dark-dim);
+  font: inherit;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+}
+
+#bottomNav button.active {
+  color: var(--text-on-dark);
+}
+
+#bottomNav .bn-ic {
+  font-size: 20px;
+  line-height: 1;
+}
+
+#bottomNav .bn-center {
+  color: var(--text-on-dark);
+}
+
+#bottomNav .bn-fab {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  transform: translateY(-14px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--border-gold);
+  margin-bottom: -12px;
+}
+
+/* Bottom sheet cho các modal chính (DESIGN.md mục 5) */
+.modal-overlay {
+  align-items: flex-end;
+  padding: 0;
+}
+
+.lantern-card,
+.name-card,
+.sheet-card,
+.more-card {
+  width: 100%;
+  max-width: 100%;
+  max-height: 78vh;
+  overflow-y: auto;
+  border-radius: 24px 24px 0 0;
+  background: var(--surface);
+  border: 1px solid var(--border-gold);
+}
+
+.lantern-card::before,
+.name-card::before,
+.sheet-card::before,
+.more-card::before {
+  content: "";
+  display: block;
+  width: 44px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border-gold);
+  margin: 8px auto;
+}
+
+.more-card {
+  padding-bottom: calc(12px + var(--safe-b));
+}
+
+.more-card .card-header {
+  background: transparent;
+}
+
+/* Vùng chạm tối thiểu 44px (DESIGN.md mục 4) */
+.nav-chip { min-height: 44px; }
+.m-tab { min-height: 44px; }
+#sutraTabs .tab { min-height: 44px; padding: 6px 12px; border-radius: 999px; }
+.btn-close-prayer,
+.btn-close-modal { width: 44px; height: 44px; }
+.prompt-btn { min-height: 44px; }
+.btn-cancel,
+.btn-save,
+.btn-danger { min-height: 44px; }
+.toggle-pill { min-height: 44px; }
+
+.toast {
+  bottom: calc(76px + var(--safe-b));
 }
