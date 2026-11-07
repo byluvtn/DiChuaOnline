@@ -108,6 +108,9 @@
   <!-- Canvas 3D Three.js -->
   <canvas id="scene" aria-label="Khuôn viên chùa 3D"></canvas>
 
+  <!-- Vignette phủ trên canvas (DESIGN 8.4): tối nhẹ 4 mép, không chặn thao tác -->
+  <div class="scene-vignette" aria-hidden="true"></div>
+
   <!-- Giao diện lớp trên UI -->
   <div id="ui">
 
@@ -311,6 +314,16 @@
       </div>
     </main>
 
+    <!-- MÀN TỤNG KINH (Chặng 5 — DESIGN.md mục 3, 5, 7.2) -->
+    <section id="kinhScreen" class="kinh-screen hidden" aria-label="Màn Tụng Kinh">
+      <header class="kinh-hero">
+        <span class="kinh-eyebrow">Chánh Điện · Tụng niệm</span>
+        <h1>Tụng Kinh</h1>
+        <p>Chọn một bài kinh, lắng lòng theo từng câu chữ cùng đại chúng.</p>
+      </header>
+      <div id="kinhList" class="kinh-list"></div>
+    </section>
+
     <!-- Hướng dẫn điều khiển góc dưới & Cần điều khiển ảo (Joystick) cho Mobile -->
     <div class="bottom-bar">
       <div id="joystickZone" class="joystick-zone">
@@ -329,6 +342,13 @@
       <small>Bản trải nghiệm cục bộ · Nhân vật trong chùa là NPC, không phải người online.</small>
       <a href="https://chuaonline.org" target="_blank" rel="noopener noreferrer">Mở cộng đồng tại chuaonline.org ↗</a>
     </aside>
+
+    <!-- Chat rút gọn (DESIGN.md mục 7.4 — Chặng 4): 1 dòng mờ dưới-trái, bấm mở sheet -->
+    <button type="button" id="chatLine" class="chat-line" aria-label="Mở trò chuyện cộng đồng">
+      <span class="chat-line-hint">💬 Cộng đồng</span>
+      <span class="chat-line-item"></span>
+      <span class="chat-line-item"></span>
+    </button>
     
     
       <!-- BottomNav chính — đúng 5 mục (DESIGN.md mục 6) -->
@@ -342,8 +362,8 @@
   </div>
 
   <!-- PANEL ĐÈN NGUYỆN (Theo phong cách chuaonline.org) -->
-  <div id="lanternModal" class="modal-overlay" aria-label="Bảng đèn nguyện">
-    <div class="lantern-card">
+  <div id="lanternModal" class="modal-overlay sheet-overlay" aria-label="Bảng đèn nguyện">
+    <div class="lantern-card sheet-panel">
       <div class="card-header">
         <div class="header-title">
           <span class="gold-icon">🪷</span>
@@ -352,7 +372,7 @@
             <small id="lanternCount">Lời nguyện lưu trên thiết bị này</small>
           </div>
         </div>
-        <button class="btn-close-modal" id="btnCloseLantern">✕</button>
+        <button class="btn-close-modal" id="btnCloseLantern" data-sheet-close aria-label="Đóng bảng đèn nguyện">✕</button>
       </div>
 
       <!-- Tabs chuyển danh mục đèn -->
@@ -362,8 +382,17 @@
           ↗</a>
       </div>
 
-      <!-- Danh sách lời nguyện gần đây -->
-      <div id="wishesList" class="wishes-scroll"></div>
+      <!-- Vùng cuộn chung: lời nguyện của mình + điều nguyện cộng đồng (Chặng 4) -->
+      <div class="lantern-scroll">
+        <!-- Danh sách lời nguyện gần đây -->
+        <div id="wishesList" class="wishes-scroll"></div>
+
+        <!-- Điều nguyện mẫu từ cộng đồng (dữ liệu mock — js/mock-data.js) -->
+        <div class="sample-wishes">
+          <h4 class="sample-wishes-title">Điều nguyện từ cộng đồng</h4>
+          <div id="sampleWishList"></div>
+        </div>
+      </div>
 
       <!-- Form thả đèn nguyện mới -->
       <div class="wish-form">
@@ -375,6 +404,50 @@
         <button class="btn-submit-wish" id="btnSendWish">
           <span>🪷</span> Thả đèn nguyện
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHEET TRÒ CHUYỆN CỘNG ĐỒNG (Chặng 4 — dữ liệu mẫu, chưa nối máy chủ) -->
+  <div id="chatSheet" class="modal-overlay sheet-overlay hidden" aria-label="Trò chuyện cộng đồng">
+    <div class="chat-card sheet-panel">
+      <div class="card-header">
+        <div class="header-title">
+          <span aria-hidden="true">💬</span>
+          <div>
+            <h3>Cộng đồng sân chùa</h3>
+            <small>Dữ liệu mẫu — chưa nối máy chủ</small>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal" data-sheet-close aria-label="Đóng trò chuyện">✕</button>
+      </div>
+      <div id="chatList" class="chat-list"></div>
+      <div class="chat-form">
+        <input type="text" id="inpChatText" maxlength="200" placeholder="Nhập lời chào…" />
+        <button type="button" id="btnSendChat" class="btn-send-chat">Gửi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLAYER TỤNG KINH (Chặng 5 — bottom sheet dùng chung, DESIGN.md mục 5, 7.1, 7.2) -->
+  <div id="kinhPlayerSheet" class="modal-overlay sheet-overlay hidden" role="dialog" aria-modal="true"
+    aria-labelledby="kinhPlayerTitle">
+    <div class="kinh-player-card sheet-panel">
+      <div class="card-header">
+        <div class="header-title">
+          <span class="gold-icon" aria-hidden="true">📖</span>
+          <div>
+            <h3 id="kinhPlayerTitle">Chú Đại Bi</h3>
+            <small id="kinhPlayerSub"></small>
+          </div>
+        </div>
+        <button type="button" class="btn-close-modal" data-sheet-close aria-label="Đóng máy tụng kinh">✕</button>
+      </div>
+      <div id="kinhPlayerText" class="kinh-player-text" aria-label="Chữ kinh đang tụng"></div>
+      <div class="kinh-player-controls">
+        <button type="button" id="btnKinhPlay" class="kinh-play-btn" aria-label="Phát hoặc dừng tụng kinh"
+          aria-pressed="false">▶</button>
+        <span id="kinhTimer" class="pill-btn kinh-timer" aria-label="Thời gian đang tụng">⏱ 00:00</span>
       </div>
     </div>
   </div>

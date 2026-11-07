@@ -137,6 +137,49 @@ const BAT_NHA = [
   'Bồ Đề tát bà ha'
 ];
 
+const A_DI_DA = [
+  'Như thị ngã văn',
+  'Nhất thời Phật tại Xá Vệ quốc',
+  'Kỳ Thọ Cấp Cô Độc Viên',
+  'Cùng đại Tỳ-kheo tăng',
+  'Một nghìn hai trăm năm mươi người',
+  'Nhĩ thời Phật cáo Xá Lợi Phất',
+  'Tùng thị hướng tây',
+  'Quá thập vạn ức Phật độ',
+  'Hữu thế giới danh viết Cực Lạc',
+  'Kỳ độ quốc trung',
+  'Hữu Phật hiệu A Di Đà',
+  'Kim hiện tại thuyết pháp',
+  'Xá Lợi Phất! Bỉ quốc hà dĩ danh viết Cực Lạc?',
+  'Kỳ quốc chúng sinh',
+  'Vô hữu chúng khổ',
+  'Thụ chư pháp lạc',
+  'Cố danh Cực Lạc',
+  'Xá Lợi Phất! Bỉ Phật thọ mạng cập nhân dân',
+  'Vô lượng vô biên A-tăng-kỳ kiếp',
+  'Cố danh A Di Đà'
+];
+
+const PHO_MON = [
+  'Nhĩ thời Vô Tận Ý Bồ Tát',
+  'Tức tùng tọa khởi',
+  'Thiên đản hữu kiên',
+  'Hiệp chưởng hướng Phật nhi tác thị ngôn',
+  'Thế Tôn! Quán Thế Âm Bồ Tát',
+  'Dĩ hà nhân duyên danh vi Quán Thế Âm?',
+  'Phật cáo Vô Tận Ý Bồ Tát',
+  'Thiện nam tử! Nhược hữu vô lượng bách thiên vạn ức chúng sinh',
+  'Thọ chư khổ não',
+  'Văn thị Quán Thế Âm Bồ Tát',
+  'Nhất tâm xưng danh',
+  'Quán Thế Âm Bồ Tát tức thời quán kỳ âm thanh',
+  'Giai đắc giải thoát',
+  'Nhược hữu trì thị Quán Thế Âm Bồ Tát danh giả',
+  'Thiết nhập đại hỏa',
+  'Hỏa bất năng thiêu',
+  'Do thị Bồ Tát uy thần chi lực'
+];
+
 const VANG_SANH = [
   'Nam mô a di đa bà dạ',
   'Đa tha dà đa dạ',
@@ -171,6 +214,24 @@ export const SUTRAS = [
     intro: 'Khởi lòng từ bi, tâm an tịnh rồi mới tụng.',
     tint: 0xffc46a,
     lines: DAI_BI
+  },
+  {
+    id: 'a-di-da',
+    name: 'Kinh A Di Đà',
+    short: 'A Di Đà',
+    subtitle: 'Phật Thuyết A Di Đà Kinh — Trích đoạn mở đầu',
+    intro: 'Trích đoạn mở đầu Phật Thuyết A Di Đà Kinh — tụng chậm, quán tưởng cõi Cực Lạc.',
+    tint: 0xffd79a,
+    lines: A_DI_DA
+  },
+  {
+    id: 'pho-mon',
+    name: 'Kinh Phổ Môn',
+    short: 'Phổ Môn',
+    subtitle: 'Phổ Môn Phẩm — Trích đoạn mở đầu',
+    intro: 'Trích đoạn mở đầu Phổ Môn Phẩm — nhất tâm xưng danh Quán Thế Âm Bồ Tát.',
+    tint: 0xb8d4ff,
+    lines: PHO_MON
   },
   {
     id: 'niem-phat',

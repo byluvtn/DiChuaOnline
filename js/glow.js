@@ -66,8 +66,19 @@ export function createGlowSprite(size = 2, color = 0xffc978, opacity = 0.9, puls
     return sprite;
 }
 
+/** Bật/tắt toàn bộ quầng sáng pulse (dùng cho cơ chế hạ chất lượng 8.5). */
+let glowPulsesEnabled = true;
+
+export function setGlowPulsesEnabled(on) {
+    glowPulsesEnabled = on;
+    for (let i = 0; i < glowPulses.length; i++) {
+        glowPulses[i].sprite.visible = on;
+    }
+}
+
 /** Cập nhật nhịp thở của toàn bộ quầng sáng. Gọi mỗi frame. */
 export function updateGlowPulses(time) {
+    if (!glowPulsesEnabled) return;
     for (let i = 0; i < glowPulses.length; i++) {
         const item = glowPulses[i];
         const wave = 0.5 + 0.5 * Math.sin(time * item.speed + item.phase);

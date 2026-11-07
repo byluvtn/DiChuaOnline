@@ -10,7 +10,8 @@
 import * as THREE from './three.module.js';
 import { createCharacter, poseChibi, disposeCharacter, updateCharacter, normalizeCharacterType, switchCharacter } from './characters.js';
 import { buildCampus, CAMPUS_BOUNDS } from './campus.js';
-import { createGlowSprite, updateGlowPulses } from './glow.js';
+import { mergeStaticMeshes } from './static-merge.js';
+import { createGlowSprite, updateGlowPulses, glowPulses, setGlowPulsesEnabled } from './glow.js';
 
 let meditationSeats = [];
 let pendingSeat = null;
@@ -49,6 +50,7 @@ let lanternsInPond = [];
 let smokeParticles = [];
 const terrainMeshes = [];
 const pondLeaves = [];
+const hallSmokeSprites = [];
 const bridgeLights = [];
 const lotusMaterials = [];
 const terrainRaycaster = new THREE.Raycaster();
@@ -73,6 +75,16 @@ function groundPlayer(dt, snap = false) {
 }
 
 function updatePondEffects(time) {
+  // Khói hương Chánh Điện: cuộn khói mỏng bay lên từ lư hương, mờ dần ở 2 đầu chu kỳ.
+  hallSmokeSprites.forEach(({ sprite, baseX, baseZ, phase, speed }) => {
+    const t = (time * speed + phase) % 1;
+    sprite.position.y = 1.45 + t * 1.7;
+    sprite.position.x = baseX + Math.sin(time * 0.6 + phase * 9.0) * 0.09 * (0.4 + t);
+    sprite.position.z = baseZ + Math.cos(time * 0.45 + phase * 7.0) * 0.05 * (0.4 + t);
+    sprite.material.opacity = 0.13 * Math.sin(Math.PI * t);
+    const s = 0.55 + t * 0.8;
+    sprite.scale.set(s, s, 1);
+  });
   pondLeaves.forEach(({ mesh, baseY, phase }) => {
     mesh.position.y = baseY + Math.sin(time * 1.4 + phase) * 0.008;
   });
@@ -119,16 +131,17 @@ export const LOCATIONS = {
 };
 
 export function initScene(canvas, quality = 'mid') {
-  terrainMeshes.length = pondLeaves.length = bridgeLights.length = lotusMaterials.length = 0;
+  terrainMeshes.length = pondLeaves.length = bridgeLights.length = lotusMaterials.length = hallSmokeSprites.length = 0;
   scene = new THREE.Scene();
   // Nền hoàng hôn ấm: tím mận chuyển cam, không còn bầu trời đen lạnh.
   scene.background = new THREE.Color(0x2c1a32);
-  // Sương mù cùng tông nền để chiều sâu lùi dần vào không khí ấm, không thành mảng đen.
-  scene.fog = new THREE.FogExp2(0x3a2233, 0.0125);
+  // Sương mù tuyến tính (DESIGN 8.4): màu nâu sẫm ấm 0x2a1408. Khuôn viên sâu ~100m,
+  // tầm nhìn cổng → Chánh Điện ~65m nên near/far nới theo khuôn viên: 28 → 115.
+  scene.fog = new THREE.Fog(0x2a1408, 28, 115);
 
   const aspect = canvas.clientWidth / canvas.clientHeight || 1;
   // Góc nhìn hẹp (tele nhẹ) cho cảm giác chibi 2.5D / isometric như ảnh mẫu.
-  camera = new THREE.PerspectiveCamera(38, aspect, 0.2, 260);
+  camera = new THREE.PerspectiveCamera(42, aspect, 0.2, 260);
 
   renderer = new THREE.WebGLRenderer({
     canvas,
@@ -209,14 +222,16 @@ export function initScene(canvas, quality = 'mid') {
 function setupLighting() {
   // 1. Ánh sáng môi trường ấm: trời vàng mật ong, đất nâu son.
   //    Đây là thứ thay đổi cảm giác khung hình nhiều nhất so với bản cũ.
-  const ambient = new THREE.HemisphereLight(0xffe2a3, 0x4a2a22, 1.15);
+  // DESIGN 8.4: ambient #FFD9A0 cường độ 0.55 (giữ màu đất nâu son cho phản chiếu nền).
+  const ambient = new THREE.HemisphereLight(0xffd9a0, 0x4a2a22, 0.55);
   scene.add(ambient);
 
   // 2. Ánh sáng chủ đạo mô phỏng hoàng hôn chiếu xiên từ tây-bắc.
-  const sunLight = new THREE.DirectionalLight(0xffc98a, 1.05);
+  // DESIGN 8.4: directional #FFB066 cường độ 1.1, shadow map 2048 (PCFSoft đã bật ở renderer).
+  const sunLight = new THREE.DirectionalLight(0xffb066, 1.1);
   sunLight.position.set(-26, 30, 18);
   sunLight.castShadow = true;
-  sunLight.shadow.mapSize.set(1024, 1024);
+  sunLight.shadow.mapSize.set(2048, 2048);
   sunLight.shadow.camera.near = 1;
   sunLight.shadow.camera.far = 90;
   sunLight.shadow.camera.left = -30;
@@ -750,6 +765,9 @@ function buildLotusPond() {
   const length = 9.4, count = 40, step = length / count;
   const deckY = z => 0.16 + 0.74 * Math.cos(z / length * Math.PI);
   // Ván khít, đỉnh mỗi đầu theo cùng đường cong; không có khe raycast xuyên xuống đất.
+  // Chặng 7 (8.5): gom mesh cầu để gộp tĩnh ở cuối phần cầu.
+  const planks = [];
+  const bridgeParts = [];
   for (let i = 0; i < count; i++) {
     const z0 = -length / 2 + i * step, z1 = z0 + step;
     // Chồng mép 1 mm để sai số Float32 không tạo khe raycast ở đường nối.
@@ -765,19 +783,23 @@ function buildLotusPond() {
     plank.name = 'Bridge plank';
     plank.position.z = (z0 + z1) / 2;
     bridge.add(registerWalkable(plank));
+    planks.push(plank);
     // Rãnh tối nằm trên mặt ván, không làm thủng bề mặt đi bộ.
     const groove = new THREE.Mesh(new THREE.BoxGeometry(1.68, 0.002, 0.012), grooveMat);
     groove.position.set(0, deckY(z0 + 0.015) + 0.001, z0 + 0.015);
     bridge.add(groove);
+    bridgeParts.push(groove);
   }
   for (const side of [-1, 1]) {
     for (let i = 0; i <= 8; i++) {
       const z = -length / 2 + length * i / 8, y = deckY(z);
       const post = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.075, 0.8, 12), railMat);
       post.position.set(side * 0.8, y + 0.4, z); bridge.add(post);
+      bridgeParts.push(post);
       const bud = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 12), bronze);
       bud.scale.set(0.85, 1.45, 0.85);
       bud.position.set(side * 0.8, y + 0.88, z); bridge.add(bud);
+      bridgeParts.push(bud);
       if (i === 0 || i === 8) {
         const material = new THREE.MeshStandardMaterial({ color: 0xf26327, emissive: 0xff4815, emissiveIntensity: 0.9, roughness: 0.45 });
         const lantern = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 12), material);
@@ -786,6 +808,7 @@ function buildLotusPond() {
         for (const dy of [-0.2, 0.2]) {
           const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.035, 12), bronze);
           cap.position.set(side * 0.8, y + 1.2 + dy, z); bridge.add(cap);
+          bridgeParts.push(cap);
         }
         const light = new THREE.PointLight(0xff6a28, 1.5, 3.5, 2);
         light.position.copy(lantern.position); bridge.add(light);
@@ -797,9 +820,22 @@ function buildLotusPond() {
         const z = -length / 2 + length * i / 32;
         return new THREE.Vector3(side * 0.8, deckY(z) + height, z);
       });
-      bridge.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 64, 0.045, 10, false), railMat));
+      const tube = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 64, 0.045, 10, false), railMat);
+      bridge.add(tube);
+      bridgeParts.push(tube);
     }
   }
+  // Chặng 7 (8.5): gộp ván cầu — mesh gộp thay 40 ván lẻ làm bề mặt đi
+  // (registerWalkable), raycast cho cùng điểm chạm nên hành vi đi lại không đổi.
+  // Gộp TRƯỚC traverse để traverse vẫn đặt castShadow/receiveShadow cho mesh gộp.
+  const plankMerged = mergeStaticMeshes(bridge, planks).merged[0];
+  if (plankMerged) {
+    for (let i = terrainMeshes.length - 1; i >= 0; i--) {
+      if (planks.includes(terrainMeshes[i])) terrainMeshes.splice(i, 1);
+    }
+    registerWalkable(plankMerged);
+  }
+  mergeStaticMeshes(bridge, bridgeParts);
   bridge.traverse(object => {
     if (object.isMesh) { object.castShadow = true; object.receiveShadow = true; }
   });
@@ -849,6 +885,10 @@ function buildLotusPond() {
       lotus.position.set(lx, 0.12, lz);
       lotus.scale.setScalar(0.7 + Math.random() * 0.3);
       pondGroup.add(lotus);
+      // Chặng 7 (8.5): gộp mesh con của từng bông sen hồ — hình ảnh giữ nguyên.
+      const lotusMeshes = [];
+      lotus.traverse((o) => { if (o.isMesh) lotusMeshes.push(o); });
+      mergeStaticMeshes(lotus, lotusMeshes);
 
       const bloom = createGlowSprite(1.05, isPink ? 0xff7fb2 : 0xffd9a8, 0.5, true);
       bloom.position.set(lx, 0.26, lz);
@@ -1072,6 +1112,16 @@ function createGoldenBuddha(scale = 1) {
 
   g.add(haloGroup);
 
+  // Chặng 7 (8.5): gộp mesh tĩnh của tượng theo vật liệu — giữ riêng leaf và
+  // innerHalo để nguyên thứ tự trộn trong suốt của hào quang. Hình ảnh không đổi.
+  const buddhaParts = [];
+  g.traverse((obj) => {
+    if (obj.isMesh && obj !== leaf && obj !== innerHalo) {
+      buddhaParts.push(obj);
+    }
+  });
+  mergeStaticMeshes(g, buddhaParts);
+
   g.scale.setScalar(scale);
   return g;
 }
@@ -1082,18 +1132,112 @@ function createGoldenBuddha(scale = 1) {
    - Đèn lồng, nến, bình sen trang trí như ảnh 3
    - Hàng chục Phật tử quỳ tụng kinh trang nghiêm
    ======================================================== */
+/**
+ * DESIGN 8.4 — Texture gạch hoa Chánh Điện, sinh bằng canvas.
+ * 512px = 1 viên gạch = 1.2m thế giới. Nền #97683E, hoa văn kim cương
+ * 8 cánh màu gỗ sẫm #36160C, viền viên gạch đôi. RepeatWrapping để lát lưới.
+ * (Từ Vilao Call 1a — tcl/claude-opus-4-8, đã duyệt.)
+ */
+function createHallTileTexture() {
+  const S = 512;
+  const c = document.createElement('canvas');
+  c.width = c.height = S;
+  const ctx = c.getContext('2d');
+
+  // Nền gạch vàng đất
+  ctx.fillStyle = '#97683E';
+  ctx.fillRect(0, 0, S, S);
+
+  // Vân đá nhẹ (chấm ngẫu nhiên cùng tông, tạo chất gạch cũ)
+  for (let i = 0; i < 900; i++) {
+    ctx.fillStyle = Math.random() < 0.5 ? 'rgba(54,22,12,0.05)' : 'rgba(245,231,206,0.05)';
+    ctx.beginPath();
+    ctx.arc(Math.random() * S, Math.random() * S, Math.random() * 3 + 1, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Viền viên gạch: nét đậm ngoài + nét mảnh trong
+  ctx.strokeStyle = '#36160C';
+  ctx.lineWidth = 10;
+  ctx.strokeRect(5, 5, S - 10, S - 10);
+  ctx.strokeStyle = 'rgba(54,22,12,0.45)';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(22, 22, S - 44, S - 44);
+
+  // Hoa văn trung tâm: hai hình thoi xoay tạo hoa 8 cánh + nhụy son sẫm
+  const cx = S / 2, cy = S / 2;
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  ctx.strokeStyle = '#36160C';
+  ctx.lineWidth = 8;
+  ctx.beginPath();
+  ctx.moveTo(0, -150); ctx.lineTo(150, 0); ctx.lineTo(0, 150); ctx.lineTo(-150, 0);
+  ctx.closePath();
+  ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(54,22,12,0.55)';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(0, -106); ctx.lineTo(106, 0); ctx.lineTo(0, 106); ctx.lineTo(-106, 0);
+  ctx.closePath();
+  ctx.stroke();
+
+  ctx.fillStyle = '#36160C';
+  ctx.beginPath(); ctx.arc(0, 0, 26, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = 'rgba(245,231,206,0.35)';
+  ctx.beginPath(); ctx.arc(0, 0, 12, 0, Math.PI * 2); ctx.fill();
+
+  // 4 chấm góc trong viên — khớp mối nối hoa giữa các viên khi lát lưới
+  ctx.fillStyle = 'rgba(54,22,12,0.5)';
+  for (const [gx, gy] of [[70, 70], [-70, 70], [70, -70], [-70, -70]]) {
+    ctx.beginPath(); ctx.arc(gx, gy, 14, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 4;
+  return tex;
+}
+
+/**
+ * Texture khói hương: radial mềm trắng-kem, dùng với NormalBlending và
+ * opacity thấp (khác glow texture vốn là AdditiveBlending cho quầng sáng).
+ */
+let smokeTextureCache = null;
+function createSmokeTexture() {
+  if (smokeTextureCache) return smokeTextureCache;
+  const S = 128;
+  const c = document.createElement('canvas');
+  c.width = c.height = S;
+  const ctx = c.getContext('2d');
+  const grad = ctx.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+  grad.addColorStop(0, 'rgba(255,250,238,0.85)');
+  grad.addColorStop(0.45, 'rgba(255,250,238,0.38)');
+  grad.addColorStop(1, 'rgba(255,250,238,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, S, S);
+  smokeTextureCache = new THREE.CanvasTexture(c);
+  return smokeTextureCache;
+}
+
 function buildMainTempleHall() {
   const hall = new THREE.Group();
   hall.position.set(0, 0, -40);
 
   const woodColMat = new THREE.MeshStandardMaterial({ color: 0x822116, roughness: 0.5 }); // Cột gỗ son đỏ
-  const roofMat = new THREE.MeshStandardMaterial({ color: 0x942d1e, roughness: 0.6 }); // Ngói đỏ cong
+  // DESIGN 8.2: mái tối màu (đỏ nâu sẫm pha wood-dark), cấm đỏ tươi phẳng phủ kín trời.
+  const roofMat = new THREE.MeshStandardMaterial({ color: 0x5f2015, roughness: 0.7 }); // Ngói đỏ sẫm cong
   const goldMat = new THREE.MeshStandardMaterial({
     color: 0xffd24d,
     roughness: 0.25,
     metalness: 0.85,
     emissive: 0x3d2806
   });
+  // Chặng 7 (8.5): danh sách mesh tĩnh của điện sẽ gộp ở cuối buildMainTempleHall.
+  const hallMergeParts = [];
 
   // Bệ tam cấp đá
   const plinth = new THREE.Mesh(
@@ -1105,6 +1249,51 @@ function buildMainTempleHall() {
   plinth.castShadow = true;
   hall.add(registerWalkable(plinth));
 
+  // DESIGN 8.4 — Sàn gạch hoa phủ mặt bệ (bệ cao 0.6, sàn nổi 5mm chống z-fighting).
+  // Không registerWalkable: plinth đã là bề mặt đi, sàn chỉ là lớp phủ hình ảnh.
+  const hallFloorTex = createHallTileTexture();
+  hallFloorTex.repeat.set(12, 7); // 14.4/1.2 x 8.4/1.2 viên
+  const hallFloor = new THREE.Mesh(
+    new THREE.PlaneGeometry(14.4, 8.4),
+    new THREE.MeshStandardMaterial({ map: hallFloorTex, roughness: 0.55 })
+  );
+  hallFloor.rotation.x = -Math.PI / 2;
+  hallFloor.position.y = 0.605;
+  hallFloor.receiveShadow = true;
+  hall.add(hallFloor);
+
+  // Thảm đỏ son trục hành lễ: rộng 2.4m, từ mép trước bệ (z +4.2) đến chân bàn thờ (z -1.5).
+  const altarCarpet = new THREE.Mesh(
+    new THREE.BoxGeometry(2.4, 0.012, 5.7),
+    new THREE.MeshStandardMaterial({ color: 0x7a0506, roughness: 0.85 }) // #970006 sẫm hơn một chút
+  );
+  altarCarpet.position.set(0, 0.611, 1.35); // mặt thảm cao hơn sàn gạch 0.012m
+  altarCarpet.receiveShadow = true;
+  hall.add(altarCarpet);
+
+  // Chặng 6 (điểm 4): sân gạch hoa trước bệ — trước đây là nền đất trơn
+  // chiếm ~1/3 dưới khung hình. Texture MỚI (createHallTileTexture trả
+  // CanvasTexture mới mỗi lần gọi) vì repeat của sàn điện đã đặt riêng.
+  const apronTex = createHallTileTexture();
+  apronTex.repeat.set(12, 6); // gạch ~1.2m/viên như sàn điện
+  const apron = new THREE.Mesh(
+    new THREE.PlaneGeometry(14.4, 7),
+    new THREE.MeshStandardMaterial({ map: apronTex, roughness: 0.55 })
+  );
+  apron.rotation.x = -Math.PI / 2;
+  apron.position.set(0, 0.02, 8.0); // từ mép trước bệ z +4.5 tới z +11.5
+  apron.receiveShadow = true;
+  hall.add(apron);
+
+  // Dải thảm đỏ son nối lối đi từ chân bệ xuống sân
+  const apronCarpet = new THREE.Mesh(
+    new THREE.BoxGeometry(2.4, 0.012, 7),
+    new THREE.MeshStandardMaterial({ color: 0x7a0506, roughness: 0.85 })
+  );
+  apronCarpet.position.set(0, 0.026, 8.0);
+  apronCarpet.receiveShadow = true;
+  hall.add(apronCarpet);
+
   // 8 Cột chùa lớn
   const colPositions = [
     [-6.5, -3.5], [-2.2, -3.5], [2.2, -3.5], [6.5, -3.5],
@@ -1115,6 +1304,7 @@ function buildMainTempleHall() {
     col.position.set(cx, 2.7, cz);
     col.castShadow = true;
     hall.add(col);
+    hallMergeParts.push(col);
   });
 
   // Mái chùa cong 2 tầng truyền thống
@@ -1134,10 +1324,26 @@ function buildMainTempleHall() {
   roof2.castShadow = true;
   hall.add(roof2);
 
+  // Xà ngang gỗ sẫm dưới mép mái tầng 1 (DESIGN 8.2): 3 xà bậc thang theo độ dốc mái,
+  // tạo lớp mái có chiều sâu thay vì một khối nón trơn.
+  const eaveBeamMat = new THREE.MeshStandardMaterial({ color: 0x4a1408, roughness: 0.75 });
+  [
+    { len: 12.4, y: 4.78, z: 3.3 },
+    { len: 11.0, y: 5.18, z: 1.7 },
+    { len: 9.6, y: 5.58, z: 0.1 }
+  ].forEach((b) => {
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(b.len, 0.2, 0.26), eaveBeamMat);
+    beam.position.set(0, b.y, b.z);
+    beam.castShadow = true;
+    hall.add(beam);
+    hallMergeParts.push(beam);
+  });
+
   // Đỉnh tháp vàng
   const finial = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.25, 1.2, 8), goldMat);
   finial.position.y = 8.5;
   hall.add(finial);
+  hallMergeParts.push(finial);
 
   // ===== BỨC TRANH TƯỜNG HOA SEN 2D PHẬT GIÁO (ảnh 3) =====
   const muralTex = createLotusMuralTexture();
@@ -1159,6 +1365,7 @@ function buildMainTempleHall() {
     const bar = new THREE.Mesh(new THREE.BoxGeometry(b.w, b.h, 0.1), goldMat);
     bar.position.set(b.x, b.y, -4.45);
     hall.add(bar);
+    hallMergeParts.push(bar);
   });
 
   // ===== BÀN THỜ CHÁNH ĐIỆN =====
@@ -1173,6 +1380,7 @@ function buildMainTempleHall() {
   const altarFront = new THREE.Mesh(new THREE.BoxGeometry(8.6, 0.8, 0.06), goldMat);
   altarFront.position.set(0, 1.0, -1.58);
   hall.add(altarFront);
+  hallMergeParts.push(altarFront);
 
   // ===== TAM THẾ PHẬT DÁT VÀNG TRÊN ĐÀI SEN TÍM (ảnh 3) =====
   const buddhaCenter = createGoldenBuddha(1.0);
@@ -1186,6 +1394,21 @@ function buildMainTempleHall() {
   const buddhaRight = createGoldenBuddha(0.68);
   buddhaRight.position.set(2.7, 1.7, -3.8);
   hall.add(buddhaRight);
+
+  // Hào quang mềm sau tượng Phật giữa (DESIGN 8.2/8.4): quầng glow lớn + đĩa sáng
+  // cộng sáng rất nhẹ, đặt trước tranh tường (z -4.45) và sau tượng (z -3.5).
+  const buddhaHalo = createGlowSprite(5.4, 0xffc978, 0.5, true);
+  buddhaHalo.position.set(0, 3.3, -4.0);
+  hall.add(buddhaHalo);
+  const haloDisc = new THREE.Mesh(
+    new THREE.CircleGeometry(1.55, 32),
+    new THREE.MeshBasicMaterial({
+      color: 0xffd98a, transparent: true, opacity: 0.16,
+      blending: THREE.AdditiveBlending, depthWrite: false, fog: false
+    })
+  );
+  haloDisc.position.set(0, 3.55, -4.12);
+  hall.add(haloDisc);
 
   // Ánh sáng vàng rực ấm tỏa từ bàn thờ
   const altarLight = new THREE.PointLight(0xffc35c, 2.2, 14, 1.4);
@@ -1221,6 +1444,7 @@ function buildMainTempleHall() {
     const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.14, 0.1, 10), goldMat);
     cap.position.set(lx, 4.32, -3.0);
     hall.add(cap);
+    hallMergeParts.push(cap);
 
     const tassel = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.22, 8), tasselMat);
     tassel.rotation.x = Math.PI;
@@ -1237,6 +1461,7 @@ function buildMainTempleHall() {
     const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.09, 0.5, 10), goldMat);
     stick.position.set(cx, 1.95, -2.4);
     hall.add(stick);
+    hallMergeParts.push(stick);
 
     const candle = new THREE.Mesh(
       new THREE.CylinderGeometry(0.06, 0.06, 0.3, 10),
@@ -1267,6 +1492,14 @@ function buildMainTempleHall() {
     bloom.position.set(vx, 2.2, -2.5);
     bloom.scale.setScalar(1.4);
     hall.add(bloom);
+    // Chặng 7 (8.5): gộp riêng từng bông sen bàn thờ theo vật liệu.
+    const bloomParts = [];
+    bloom.traverse((obj) => {
+      if (obj.isMesh) {
+        bloomParts.push(obj);
+      }
+    });
+    mergeStaticMeshes(bloom, bloomParts);
   });
 
   // LƯ HƯƠNG ĐỒNG KHÓI NGHI NGÚT TRƯỚC BÀN THỜ
@@ -1277,6 +1510,27 @@ function buildMainTempleHall() {
   censer.position.set(0, 0.9, 0.5);
   censer.castShadow = true;
   hall.add(censer);
+
+  // Khói hương (DESIGN 8.2): 5 sprite khói mỏng bay lên từ miệng lư, cập nhật
+  // trong updatePondEffects. Mỗi sprite một material riêng để opacity độc lập.
+  for (let i = 0; i < 5; i++) {
+    const smoke = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: createSmokeTexture(),
+      color: 0xf5e7ce,
+      transparent: true,
+      opacity: 0,
+      depthWrite: false
+    }));
+    const baseX = (i - 2) * 0.07;
+    const baseZ = 0.5 + ((i % 2) - 0.5) * 0.08;
+    smoke.position.set(baseX, 1.45, baseZ);
+    smoke.scale.set(0.55, 0.55, 1);
+    hall.add(smoke);
+    hallSmokeSprites.push({
+      sprite: smoke, baseX, baseZ,
+      phase: i / 5, speed: 0.05 + (i % 3) * 0.012
+    });
+  }
 
   // 3 nén nhang phát sáng đỏ
   [-0.08, 0, 0.08].forEach((ix, idx) => {
@@ -1296,36 +1550,676 @@ function buildMainTempleHall() {
     hall.add(ember);
   });
 
-  // Chỉ dựng đệm trống trong Chánh Điện, không sinh dummy/NPC.
-  const cushionMat = new THREE.MeshStandardMaterial({ color: 0xa83222, roughness: 0.7 });
-
-  for (let row = 0; row < 3; row++) {
-    for (let col = -3; col <= 3; col++) {
-      if (Math.abs(col) === 0 && row === 0) continue; // Chừa chỗ lư hương
-
-      const mx = col * 1.55;
-      const mz = 2.0 + row * 1.45;
-
-      // Đệm ngồi quỳ
-      const cushion = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.46, 0.12, 16), cushionMat);
-      cushion.position.set(mx, 0.65, mz);
-      cushion.receiveShadow = true;
-      hall.add(cushion);
-
-    }
-  }
+  // Đệm ngồi + đám đông NPC trong Chánh Điện do buildHallCrowd() dựng bằng
+  // InstancedMesh (Chặng 3, DESIGN 8.2/8.3) — thay cho vòng đệm trống cũ.
 
   // Biển hiệu "CHÁNH ĐIỆN VÔ LƯỢNG"
   const signBoard = createSignboard('CHÁNH ĐIỆN VÔ LƯỢNG');
   signBoard.position.set(0, 4.4, 3.6);
   hall.add(signBoard);
 
+  // ===== CỘT TIỀN CẢNH + XÀ NGANG + 2 ĐÈN LỒNG TREO (DESIGN 8.2) =====
+  // "Khung tranh" tạo chiều sâu ở miệng Chánh Điện (từ Vilao Call 1b — tcl/claude-opus-4-8, đã duyệt).
+  const fgColumnMat = new THREE.MeshStandardMaterial({ color: 0x970006, roughness: 0.44, metalness: 0.02 });
+  const fgDarkWoodMat = new THREE.MeshStandardMaterial({ color: 0x36160c, roughness: 0.74 });
+  const fgGoldMat = new THREE.MeshStandardMaterial({ color: 0xd3ac7e, roughness: 0.34, metalness: 0.55 });
+  const fgStringMat = new THREE.MeshStandardMaterial({ color: 0x36160c, roughness: 0.8 });
+  const fgLanternBodyMat = new THREE.MeshStandardMaterial({
+    color: 0x970006, roughness: 0.38, emissive: 0xef5f29, emissiveIntensity: 1.6
+  });
+  const fgTasselMat = new THREE.MeshStandardMaterial({ color: 0x970006, roughness: 0.6 });
+
+  // 2 cột tiền cảnh sơn son đứng trên mặt đất (y 0 → 4.8), phía trước bệ
+  [-3.4, 3.4].forEach((fx) => {
+    const fgBase = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.35, 0.9), fgDarkWoodMat);
+    fgBase.position.set(fx, 0.175, 5.2);
+    fgBase.castShadow = true;
+    fgBase.receiveShadow = true;
+    hall.add(fgBase);
+    hallMergeParts.push(fgBase);
+
+    const fgColumn = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 4.8, 18), fgColumnMat);
+    fgColumn.position.set(fx, 2.4, 5.2);
+    fgColumn.castShadow = true;
+    fgColumn.receiveShadow = true;
+    hall.add(fgColumn);
+    hallMergeParts.push(fgColumn);
+
+    // Vành vàng nhỏ ở đầu cột
+    const fgCollar = new THREE.Mesh(new THREE.CylinderGeometry(0.37, 0.37, 0.12, 18), fgGoldMat);
+    fgCollar.position.set(fx, 4.56, 5.2);
+    fgCollar.castShadow = true;
+    hall.add(fgCollar);
+    hallMergeParts.push(fgCollar);
+  });
+
+  // Xà ngang gỗ sẫm nối 2 cột
+  const fgBeam = new THREE.Mesh(new THREE.BoxGeometry(7.6, 0.16, 0.32), fgDarkWoodMat);
+  fgBeam.position.set(0, 4.7, 5.2);
+  fgBeam.castShadow = true;
+  fgBeam.receiveShadow = true;
+  hall.add(fgBeam);
+  hallMergeParts.push(fgBeam);
+
+  // Chốt vàng 2 đầu xà
+  [-3.8, 3.8].forEach((fx) => {
+    const fgBeamCap = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.26, 0.36), fgGoldMat);
+    fgBeamCap.position.set(fx, 4.7, 5.2);
+    fgBeamCap.castShadow = true;
+    hall.add(fgBeamCap);
+    hallMergeParts.push(fgBeamCap);
+  });
+
+  // 2 đèn lồng treo dưới xà ngang: emissive #EF5F29 + glow sprite + PointLight (8.4)
+  // Chặng 6 (điểm 5): đèn thu vào ±1.35 và hạ 0.1 để lọt vào khung portrait
+  // (ở ±2.6 chúng nằm ngoài trường nhìn dọc ~20° nên không bao giờ hiện).
+  [-1.35, 1.35].forEach((lx) => {
+    const fgString = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.16, 6), fgStringMat);
+    fgString.position.set(lx, 4.52, 5.2);
+    hall.add(fgString);
+
+    const fgLantern = new THREE.Mesh(new THREE.SphereGeometry(0.24, 16, 12), fgLanternBodyMat);
+    fgLantern.scale.set(1, 1.15, 1);
+    fgLantern.position.set(lx, 4.3, 5.2);
+    hall.add(fgLantern);
+
+    const fgCap = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 0.07, 10), fgGoldMat);
+    fgCap.position.set(lx, 4.565, 5.2);
+    hall.add(fgCap);
+    hallMergeParts.push(fgCap);
+
+    const fgTassel = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.22, 8), fgTasselMat);
+    fgTassel.rotation.x = Math.PI;
+    fgTassel.position.set(lx, 3.92, 5.2);
+    hall.add(fgTassel);
+
+    const fgHalo = createGlowSprite(2.2, 0xffb257, 0.6, true);
+    fgHalo.position.set(lx, 4.3, 5.2);
+    hall.add(fgHalo);
+
+    const fgLampLight = new THREE.PointLight(0xef5f29, 1.2, 7, 1.8);
+    fgLampLight.position.set(lx, 4.3, 5.2);
+    hall.add(fgLampLight);
+  });
+
+  // Chặng 7 (8.5): gộp mesh tĩnh của điện theo vật liệu + cờ bóng đổ.
+  mergeStaticMeshes(hall, hallMergeParts);
+
+  // Chặng 3: đám đông NPC ngồi trên bệ (InstancedMesh, DESIGN 8.3).
+  buildHallCrowd(hall);
+  buildCrowdPills();
+
   scene.add(hall);
 }
 
 /* ========================================================
-   QUÁN ÂM CÁC (THIỀN VIỆN PHỤ 1)
+   ĐÁM ĐÔNG NPC CHÁNH ĐIỆN (Chặng 3 — DESIGN 8.2, 8.3, 8.5)
+   InstancedMesh theo bộ phận: 6 draw call cho cả đám đông.
    ======================================================== */
+// ===== Đám đông NPC trong Chánh Điện =====
+let hallCrowd = null;
+
+// RNG có hạt giống cố định (mulberry32)
+function mulberry32(seed) {
+  return function () {
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// Biến tạm dùng chung (tránh cấp phát mỗi frame)
+const _ccV = new THREE.Vector3();
+const _ccP = new THREE.Vector3();
+const _ccS = new THREE.Vector3();
+const _ccQ = new THREE.Quaternion();
+const _ccE = new THREE.Euler();
+
+// Compose ma trận cho 1 bộ phận của 1 nhân vật
+// part: {mesh, offset:Vector3, scale:Vector3, upper:boolean, robe?:boolean}
+function composeCrowdPart(fig, part, bob, bow, out) {
+  const o = _ccV.copy(part.offset);
+  if (part.upper) {
+    // thở: nâng hạ theo bob
+    o.y += bob;
+    // cúi người quanh trục x tại pivot py = 0.455 (không gian hình)
+    const py = 0.455;
+    const oy = o.y - py;
+    const ny = py + oy * Math.cos(bow) - o.z * Math.sin(bow);
+    const nz = oy * Math.sin(bow) + o.z * Math.cos(bow);
+    o.y = ny; o.z = nz;
+  }
+  // xoay offset quanh Y theo yaw của nhân vật
+  const c = Math.cos(fig.yaw), s = Math.sin(fig.yaw);
+  const nx = o.x * c + o.z * s;
+  const nz2 = -o.x * s + o.z * c;
+  o.x = nx; o.z = nz2;
+  o.multiplyScalar(fig.scale);
+  _ccP.set(fig.x, 0.605, fig.z).add(o);
+  _ccE.set(part.upper ? bow : 0, fig.yaw, 0, 'YXZ');
+  _ccQ.setFromEuler(_ccE);
+  _ccS.copy(part.scale).multiplyScalar(fig.scale);
+  if (part.robe) _ccS.y *= (1 + bob * 0.55); // áo chỉ "thở" theo scaleY
+  out.compose(_ccP, _ccQ, _ccS);
+}
+
+// Dựng đám đông ngồi trong Chánh Điện (InstancedMesh theo bộ phận)
+function buildHallCrowd(hall) {
+  const rng = mulberry32(20261107);
+  const group = new THREE.Group();
+  group.name = 'hallCrowd';
+  const figures = [];
+
+  // --- Danh sách 92 ghế ---
+  const seats = [];
+  for (let r = 0; r < 7; r++) {
+    const z = -1.05 + 0.85 * r;
+    const even = r % 2 === 0;
+    const n = even ? 7 : 6;
+    const base = even ? 1.55 : 1.99;
+    for (let k = 0; k < n; k++) {
+      for (const side of [-1, 1]) { // -1 = trái, +1 = phải (nhìn hướng -z)
+        seats.push({ r, side, k, x: side * (base + 0.88 * k), z });
+      }
+    }
+  }
+  // 2 ghế bỏ trống (vẫn có đệm)
+  const empty = new Set(['3:-1:2', '5:1:4']);
+  const isEmpty = (st) => empty.has(st.r + ':' + st.side + ':' + st.k);
+
+  // --- Xáo trộn thứ tự ghế để chia màu áo theo tỉ lệ ---
+  const order = seats.map((_, i) => i);
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    const t = order[i]; order[i] = order[j]; order[j] = t;
+  }
+  const rank = new Array(seats.length);
+  order.forEach((seatIdx, p) => { rank[seatIdx] = p; });
+  const nSaffron = Math.floor(seats.length * 0.55); // 55% cà sa
+  const nBrown = Math.floor(seats.length * 0.30);   // 30% nâu/xám
+
+  // Màu áo theo hạng sau xáo trộn
+  const robeColorOf = (rk) => {
+    const c = new THREE.Color();
+    if (rk < nSaffron) c.setHex(0xe8a020);
+    else if (rk < nSaffron + nBrown) c.setHex(rng() < 0.5 ? 0x8a5a33 : 0x6f7280);
+    else c.setHex(rng() < 0.5 ? 0x66704f : 0x3d4a6b);
+    c.offsetHSL(0, 0, (rng() * 2 - 1) * 0.04);
+    return c;
+  };
+
+  // --- 6 InstancedMesh ---
+  const parts = {};
+  const mkPart = (name, geo, ox, oy, oz, sx, sy, sz, count, dynamic, upper, robe) => {
+    const mat = new THREE.MeshStandardMaterial({ roughness: 0.85 });
+    const mesh = new THREE.InstancedMesh(geo, mat, count);
+    mesh.castShadow = false;
+    mesh.receiveShadow = false;
+    mesh.frustumCulled = false;
+    if (dynamic) mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    parts[name] = {
+      mesh,
+      offset: new THREE.Vector3(ox, oy, oz),
+      scale: new THREE.Vector3(sx, sy, sz),
+      upper: !!upper,
+      robe: !!robe,
+    };
+    group.add(mesh);
+  };
+
+  mkPart('cushion', new THREE.CylinderGeometry(0.30, 0.34, 0.11, 14),
+    0, 0.055, 0, 1, 1, 1, seats.length, false, false, false);
+  const robePts = [
+    new THREE.Vector2(0.001, 0), new THREE.Vector2(0.36, 0),
+    new THREE.Vector2(0.345, 0.08), new THREE.Vector2(0.285, 0.28),
+    new THREE.Vector2(0.225, 0.46), new THREE.Vector2(0.19, 0.58),
+  ];
+  mkPart('robe', new THREE.LatheGeometry(robePts, 18),
+    0, 0.035, 0, 1, 1, 1, 90, true, false, true);
+  mkPart('shoulders', new THREE.SphereGeometry(0.185, 18, 12),
+    0, 0.63, 0, 1, 0.72, 0.9, 90, true, true, false);
+  // Chặng 6 (điểm 3): đầu to hơn (0.155 → 0.175) cho tỉ lệ chibi như ảnh gốc.
+  mkPart('head', new THREE.SphereGeometry(0.175, 20, 14),
+    0, 0.86, 0, 1, 1.06, 0.94, 90, true, true, false);
+  mkPart('cap', new THREE.SphereGeometry(0.163, 20, 12, 0, Math.PI * 2, 0, 1.35),
+    0, 0.865, 0, 1, 1, 1, 90, true, true, false);
+  mkPart('hands', new THREE.SphereGeometry(0.055, 10, 8),
+    0, 0.525, 0.235, 0.8, 1.5, 0.8, 90, true, true, false);
+
+  // Chặng 6 (điểm 3): vũng hào quang vàng dưới chân mỗi NPC như ảnh gốc —
+  // 1 InstancedMesh tĩnh (+1 draw call), dựng thủ công vì mkPart ép
+  // MeshStandardMaterial. KHÔNG đưa vào `parts` để updateHallCrowd không
+  // bao giờ cập nhật nó theo frame. CircleGeometry sinh đứng (mặt +Z) nên
+  // bake phép nằm ngang vào geometry; composeCrowdPart không xoay part.
+  const glowPoolGeo = new THREE.CircleGeometry(0.46, 24);
+  glowPoolGeo.rotateX(-Math.PI / 2);
+  const glowPoolMesh = new THREE.InstancedMesh(
+    glowPoolGeo,
+    new THREE.MeshBasicMaterial({
+      color: 0xffc978, transparent: true, opacity: 0.30,
+      blending: THREE.AdditiveBlending, depthWrite: false
+    }),
+    90
+  );
+  glowPoolMesh.frustumCulled = false;
+  glowPoolMesh.renderOrder = 1;
+  group.add(glowPoolMesh);
+  const glowPoolPart = {
+    mesh: glowPoolMesh,
+    offset: new THREE.Vector3(0, 0.012, 0),
+    scale: new THREE.Vector3(1, 1, 1),
+    upper: false, robe: false
+  };
+
+  const capPalette = [0x3a2a20, 0x8e9aa5, 0x6b7280];
+  const m = new THREE.Matrix4();
+  const zeroFig = { x: 0, z: 0, yaw: 0, scale: 0 }; // ẩn instance (scale 0)
+  const D2R = Math.PI / 180;
+
+  seats.forEach((seat, i) => {
+    // Đệm: đặt cho cả 92 ghế (kể cả ghế trống), tĩnh
+    const cCol = new THREE.Color(0xa83222);
+    cCol.offsetHSL(0, 0, (rng() * 2 - 1) * 0.05);
+    parts.cushion.mesh.setColorAt(i, cCol);
+    composeCrowdPart({ x: seat.x, z: seat.z, yaw: Math.PI, scale: 1 }, parts.cushion, 0, 0, m);
+    parts.cushion.mesh.setMatrixAt(i, m);
+
+    if (isEmpty(seat)) return; // ghế trống: không đặt nhân vật
+
+    // Thuộc tính nhân vật
+    const fig = {
+      x: seat.x + (rng() * 2 - 1) * 0.09,
+      z: seat.z + (rng() * 2 - 1) * 0.09,
+      yaw: Math.PI + (rng() * 2 - 1) * 10 * D2R,
+      scale: 0.95 + rng() * 0.10,
+      amp: 0.008 + rng() * 0.007,
+      period: 2.6 + rng() * 1.2,
+      phase: rng() * Math.PI * 2,
+      devout: rng() < 0.45,
+      row: seat.r,
+      hasCap: false,
+    };
+    const idx = figures.length;
+    figures.push(fig);
+
+    // Màu áo + vai (chung màu áo)
+    const robeCol = robeColorOf(rank[i]);
+    parts.robe.mesh.setColorAt(idx, robeCol);
+    parts.shoulders.mesh.setColorAt(idx, robeCol);
+
+    // Màu da đầu + tay (tay sẫm hơn ×0.92)
+    const skin = new THREE.Color(0xf2c7a0);
+    skin.offsetHSL(0, 0, (rng() * 2 - 1) * 0.025);
+    parts.head.mesh.setColorAt(idx, skin);
+    parts.hands.mesh.setColorAt(idx, skin.clone().multiplyScalar(0.92));
+
+    // Khăn/tóc: ~45% có (ghi fig.hasCap để updateHallCrowd giữ ẩn số còn lại),
+    // còn lại ẩn bằng scale 0
+    if (rng() < 0.45) {
+      fig.hasCap = true;
+      parts.cap.mesh.setColorAt(idx, new THREE.Color(capPalette[Math.floor(rng() * 3)]));
+      composeCrowdPart(fig, parts.cap, 0, 0, m);
+      parts.cap.mesh.setMatrixAt(idx, m);
+    } else {
+      parts.cap.mesh.setColorAt(idx, new THREE.Color(0x000000));
+      composeCrowdPart(zeroFig, parts.cap, 0, 0, m);
+      parts.cap.mesh.setMatrixAt(idx, m);
+    }
+
+    // Ma trận ban đầu (bob = 0, bow = 0)
+    composeCrowdPart(fig, parts.robe, 0, 0, m);
+    parts.robe.mesh.setMatrixAt(idx, m);
+    composeCrowdPart(fig, parts.shoulders, 0, 0, m);
+    parts.shoulders.mesh.setMatrixAt(idx, m);
+    composeCrowdPart(fig, parts.head, 0, 0, m);
+    parts.head.mesh.setMatrixAt(idx, m);
+    composeCrowdPart(fig, parts.hands, 0, 0, m);
+    parts.hands.mesh.setMatrixAt(idx, m);
+    // Vũng hào quang tĩnh theo figure (ghế trống đã return ở trên nên
+    // chỉ 90 figure có người mới tới được đây — khớp count 90).
+    composeCrowdPart(fig, glowPoolPart, 0, 0, m);
+    glowPoolMesh.setMatrixAt(idx, m);
+  });
+
+  // Cập nhật buffer màu instance
+  Object.values(parts).forEach((p) => {
+    if (p.mesh.instanceColor) p.mesh.instanceColor.needsUpdate = true;
+  });
+
+  hall.add(group);
+  hallCrowd = { group, figures, parts, count: figures.length };
+}
+
+// ── Biến tạm dùng chung cho đám đông (không cấp phát trong vòng lặp) ──
+const TWO_PI = Math.PI * 2;
+const _crowdMat = new THREE.Matrix4();          // ma trận tạm cho mọi instance
+const ZERO_FIG = { x: 0, z: 0, yaw: 0, scale: 0 }; // figure giả để ẩn cap (scale 0)
+
+// Cập nhật đám đông mỗi frame: nhịp thở lệch pha + sóng cúi lạy khi tụng kinh.
+function updateHallCrowd(time, dt) {
+  // 1. Không có đám đông hoặc đang ẩn thì bỏ qua
+  if (!hallCrowd || !hallCrowd.group || !hallCrowd.group.visible) return;
+
+  const figures = hallCrowd.figures;
+  const parts = hallCrowd.parts;
+  const n = figures.length;
+
+  for (let i = 0; i < n; i++) {
+    const fig = figures[i];
+
+    // 2. Nhún thở
+    const bob = fig.amp * Math.sin(TWO_PI * time / fig.period + fig.phase);
+
+    // 3. Cúi lạy: tính đích rồi tiến/lui mượt
+    if (fig.bowCur === undefined) fig.bowCur = 0;
+    let bowTarget = 0;
+    if (isChanting && fig.devout) {
+      // sóng lạy lan từ hàng trước ra sau, lệch pha theo hàng
+      const w = 0.5 + 0.5 * Math.sin(TWO_PI * time / 4.6 - fig.row * 0.55 + (fig.phase % 1.0));
+      bowTarget = 0.52 * Math.pow(w, 1.6);
+    }
+    fig.bowCur += (bowTarget - fig.bowCur) * Math.min(1, dt * 3.5);
+    const bow = fig.bowCur;
+
+    // 4. Các part động của figure thật
+    composeCrowdPart(fig, parts.robe, bob, bow, _crowdMat);
+    parts.robe.mesh.setMatrixAt(i, _crowdMat);
+
+    composeCrowdPart(fig, parts.shoulders, bob, bow, _crowdMat);
+    parts.shoulders.mesh.setMatrixAt(i, _crowdMat);
+
+    composeCrowdPart(fig, parts.head, bob, bow, _crowdMat);
+    parts.head.mesh.setMatrixAt(i, _crowdMat);
+
+    composeCrowdPart(fig, parts.hands, bob, bow, _crowdMat);
+    parts.hands.mesh.setMatrixAt(i, _crowdMat);
+
+    // cap: figure không đội nón phải giữ ẩn bằng ZERO_FIG (scale 0)
+    composeCrowdPart(fig.hasCap ? fig : ZERO_FIG, parts.cap, bob, bow, _crowdMat);
+    parts.cap.mesh.setMatrixAt(i, _crowdMat);
+  }
+
+  // 5. Đánh dấu cập nhật cho 5 mesh động (cushion tĩnh, không đụng)
+  parts.robe.mesh.instanceMatrix.needsUpdate = true;
+  parts.shoulders.mesh.instanceMatrix.needsUpdate = true;
+  parts.head.mesh.instanceMatrix.needsUpdate = true;
+  parts.hands.mesh.instanceMatrix.needsUpdate = true;
+  parts.cap.mesh.instanceMatrix.needsUpdate = true;
+}
+
+/* ── Pill tên: factory vẽ canvas theo DESIGN mục 3 ───────────────────────── */
+// Tạo sprite pill tên nhân vật (canvas 256x64, hiển thị 64x16 world-scaled)
+function createNamePillSprite(name, level, isPlayer) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+
+  // Nền pill bo tròn tối đa (bán kính 32), màu tối trong suốt
+  ctx.fillStyle = 'rgba(29,15,8,0.72)';
+  ctx.beginPath();
+  ctx.moveTo(32, 0);
+  ctx.lineTo(224, 0);
+  ctx.arc(224, 32, 32, -Math.PI / 2, Math.PI / 2);
+  ctx.lineTo(32, 64);
+  ctx.arc(32, 32, 32, Math.PI / 2, Math.PI * 1.5);
+  ctx.closePath();
+  ctx.fill();
+
+  // Viền 3px (≈0.5px thật) màu đồng nhạt
+  ctx.strokeStyle = 'rgba(211,172,126,0.5)';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // Ô vuông vàng chứa level, đầu trái pill
+  ctx.fillStyle = '#D3AC7E';
+  ctx.beginPath();
+  const rx = 8, ry = 14, rs = 36, rr = 8;
+  ctx.moveTo(rx + rr, ry);
+  ctx.lineTo(rx + rs - rr, ry);
+  ctx.arcTo(rx + rs, ry, rx + rs, ry + rr, rr);
+  ctx.lineTo(rx + rs, ry + rs - rr);
+  ctx.arcTo(rx + rs, ry + rs, rx + rs - rr, ry + rs, rr);
+  ctx.lineTo(rx + rr, ry + rs);
+  ctx.arcTo(rx, ry + rs, rx, ry + rs - rr, rr);
+  ctx.lineTo(rx, ry + rr);
+  ctx.arcTo(rx, ry, rx + rr, ry, rr);
+  ctx.closePath();
+  ctx.fill();
+
+  // Số level canh giữa ô vuông
+  ctx.fillStyle = '#3A2415';
+  ctx.font = 'bold 24px "Be Vietnam Pro", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(String(level), rx + rs / 2, ry + rs / 2 + 1);
+
+  // Tên pháp danh: bóng đổ giả lệch 1px rồi chữ chính
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.font = '600 27px "Be Vietnam Pro", sans-serif';
+  const nameX = rx + rs + 10;
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.fillText(name, nameX + 1, 33);
+  ctx.fillStyle = '#F5E7CE';
+  ctx.fillText(name, nameX, 32);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+
+  const mat = new THREE.SpriteMaterial({
+    map: tex,
+    transparent: true,
+    depthWrite: false
+  });
+  const sprite = new THREE.Sprite(mat);
+  if (isPlayer) {
+    sprite.scale.set(1.3, 0.325, 1);
+    sprite.visible = true;
+  } else {
+    sprite.scale.set(1.06, 0.265, 1);
+    sprite.visible = false;
+  }
+  return sprite;
+}
+
+// Gắn pill tên cho toàn bộ đám đông Chánh Điện
+function buildCrowdPills() {
+  if (!hallCrowd) return;
+  const rng = mulberry32(20261108); // RNG riêng, không đụng buildHallCrowd
+  const first = ['Quảng', 'Tâm', 'Minh', 'Diệu', 'Hạnh', 'An', 'Trí', 'Đức', 'Hiền', 'Thanh', 'Từ', 'Phúc', 'Thiện', 'Chân', 'Ngộ'];
+  const second = ['An', 'Lạc', 'Tâm', 'Đức', 'Hiền', 'Ngộ', 'Châu', 'Liên', 'Nguyệt', 'Sơn', 'Hải', 'Quang', 'Tịnh', 'Bình', 'Hòa'];
+  for (const fig of hallCrowd.figures) {
+    const name = first[Math.floor(rng() * 15)] + ' ' + second[Math.floor(rng() * 15)];
+    const level = 1 + Math.floor(rng() * 9);
+    const sprite = createNamePillSprite(name, level, false);
+    sprite.position.set(fig.x, 1.86, fig.z);
+    sprite.visible = false; // chờ hàm cập nhật hiển thị bật khi gần camera
+    hallCrowd.group.add(sprite);
+    fig.pill = sprite;
+    fig.pillName = name;
+  }
+}
+
+/* ── Pill tên NPC: chỉ hiện khi ở gần nhân vật chính (DESIGN 8.3) ───────────
+   Kiểm tra lại mỗi 0.2s: NPC trong bán kính 7.5m quanh NGƯỜI CHƠI mới hiện
+   pill, tối đa 10 pill gần nhất để khỏi rối mắt như bản gốc hiện tên tất cả.
+   Vì sao đo từ người chơi mà không phải camera: camera bám theo ở khoảng
+   cách mặc định 17m nên nếu đo từ camera thì pill không bao giờ hiện trong
+   lối chơi thường; người chơi chính là điểm camera nhìn vào, NPC "ở gần"
+   theo đúng ý của spec là NPC quanh nhân vật. */
+let _pillNextAt = 0;
+const _pillCands = [];
+function updateCrowdPills() {
+  if (!hallCrowd || !player) return;
+  const t = clock.getElapsedTime();
+  if (t < _pillNextAt) return;
+  _pillNextAt = t + 0.2;
+
+  const figures = hallCrowd.figures;
+  const limit = hallCrowd.activeCount ?? figures.length;
+  _pillCands.length = 0;
+  if (hallCrowd.group.visible) {
+    for (let i = 0; i < limit; i++) {
+      const fig = figures[i];
+      if (!fig.pill) continue;
+      // hall đặt ở world (0, 0, -40), không xoay → world = local + (0,0,-40)
+      const dx = fig.x - player.position.x;
+      const dz = (fig.z - 40) - player.position.z;
+      const d2 = dx * dx + dz * dz;
+      if (d2 < 7.5 * 7.5) _pillCands.push([d2, fig]);
+    }
+    _pillCands.sort((a, b) => a[0] - b[0]);
+  }
+  const shown = new Set(_pillCands.slice(0, 10).map((c) => c[1]));
+  for (let i = 0; i < figures.length; i++) {
+    const fig = figures[i];
+    if (fig.pill) fig.pill.visible = shown.has(fig);
+  }
+  hallCrowd._pillDbg = {
+    anchor: [Math.round(player.position.x * 10) / 10, Math.round(player.position.z * 10) / 10],
+    cands: _pillCands.length,
+    groupVisible: hallCrowd.group.visible,
+    firstFig: figures[0] ? [figures[0].x, figures[0].z, !!figures[0].pill] : null,
+  };
+}
+
+/* ── Nhân vật chính: vòng sáng dưới chân + pill pháp danh luôn hiện (8.3) ── */
+let playerRing = null, playerPill = null, _markersScene = null;
+const _headWorld = new THREE.Vector3();
+
+function readPlayerDisplayName() {
+  let raw = 'Quảng Hạnh 55';
+  try {
+    const data = JSON.parse(localStorage.getItem('niemphat.v2') || 'null');
+    if (data && typeof data.playerName === 'string' && data.playerName.trim()) raw = data.playerName.trim();
+  } catch { /* giữ mặc định */ }
+  const m = raw.match(/^(.*?)\s*(\d+)\s*$/);
+  return m && m[1] ? { name: m[1], level: Math.max(1, parseInt(m[2], 10) || 1) } : { name: raw, level: 1 };
+}
+
+function ensurePlayerMarkers() {
+  if (_markersScene === scene && playerRing && playerPill) return;
+  // Vòng sáng vàng dưới chân (DESIGN 8.3: opacity 0.35, pulsing nhẹ)
+  playerRing = new THREE.Mesh(
+    new THREE.RingGeometry(0.40, 0.54, 40),
+    new THREE.MeshBasicMaterial({
+      color: 0xd3ac7e, transparent: true, opacity: 0.35,
+      side: THREE.DoubleSide, depthWrite: false
+    })
+  );
+  playerRing.rotation.x = -Math.PI / 2;
+  playerRing.renderOrder = 2;
+  scene.add(playerRing);
+  // Pill pháp danh: đọc tên người dùng thật từ localStorage (kho chung với app)
+  const disp = readPlayerDisplayName();
+  playerPill = createNamePillSprite(disp.name, disp.level, true);
+  playerPill.visible = true;
+  scene.add(playerPill);
+  _markersScene = scene;
+}
+
+function updatePlayerMarkers(t) {
+  if (!player || !scene) return;
+  ensurePlayerMarkers();
+  playerRing.position.set(player.position.x, player.position.y + 0.03, player.position.z);
+  const pulse = 0.5 + 0.5 * Math.sin(t * 2.2);
+  playerRing.scale.setScalar(1 + pulse * 0.07);
+  playerRing.material.opacity = 0.28 + pulse * 0.13;
+  if (player.userData.head) {
+    player.userData.head.getWorldPosition(_headWorld);
+    playerPill.position.set(player.position.x, _headWorld.y + 0.52, player.position.z);
+  } else {
+    playerPill.position.set(player.position.x, player.position.y + 2.3, player.position.z);
+  }
+  playerPill.visible = true;
+}
+
+/* ── Tự hạ chất lượng theo DESIGN 8.5 ──────────────────────────────────────
+   fps trung bình < 28 trong 3 giây → giảm NPC còn 70 + pixelRatio 1.25.
+   Ngoại lệ có chủ đích: nếu renderer là phần mềm (SwiftShader/llvmpipe —
+   môi trường test ảo hoá) thì fps không phản ánh máy thật nên chỉ ghi log,
+   không hạ chất lượng. Cơ chế vẫn chạy thật trên GPU thật. */
+let crowdStepDownApplied = false;
+let _qualityFor = null, _qTime = 0, _fpsEma = 60, _lowFpsSecs = 0;
+
+export function setCrowdCount(n) {
+  if (!hallCrowd) return;
+  const c = Math.max(0, Math.min(n, hallCrowd.figures.length));
+  for (const key of ['robe', 'shoulders', 'head', 'cap', 'hands']) {
+    hallCrowd.parts[key].mesh.count = c;
+  }
+  hallCrowd.activeCount = c;
+}
+
+function isSoftwareRenderer() {
+  try {
+    const gl = renderer.getContext();
+    const ext = gl.getExtension('WEBGL_debug_renderer_info');
+    const name = ext ? String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || '') : '';
+    return /swiftshader|llvmpipe|software/i.test(name);
+  } catch { return false; }
+}
+
+/** Chẩn đoán đám đông (dùng cho probe kiểm chứng và debug các chặng sau). */
+export function getCrowdStats() {
+  if (!hallCrowd) return null;
+  const c = new THREE.Color();
+  const robeColors = [];
+  const robeMesh = hallCrowd.parts.robe.mesh;
+  for (let i = 0; i < hallCrowd.figures.length; i++) {
+    robeMesh.getColorAt(i, c);
+    robeColors.push('#' + c.getHexString());
+  }
+  return {
+    figures: hallCrowd.figures.length,
+    activeCount: hallCrowd.activeCount ?? hallCrowd.figures.length,
+    cushions: hallCrowd.parts.cushion.mesh.count,
+    parts: Object.fromEntries(Object.entries(hallCrowd.parts).map(([k, p]) => [k, p.mesh.count])),
+    devout: hallCrowd.figures.filter((f) => f.devout).length,
+    withCap: hallCrowd.figures.filter((f) => f.hasCap).length,
+    pillsVisible: hallCrowd.figures.filter((f) => f.pill && f.pill.visible).length,
+    pillDebug: hallCrowd._pillDbg || null,
+    bowingCount: hallCrowd.figures.filter((f) => (f.bowCur || 0) > 0.1).length,
+    maxBow: Math.max(0, ...hallCrowd.figures.map((f) => f.bowCur || 0)),
+    robeColors,
+  };
+}
+
+function monitorCrowdQuality(dt) {
+  if (!hallCrowd || !renderer) return;
+  if (_qualityFor !== hallCrowd) { // đám đông mới (initScene lại) → đặt lại bộ đo
+    _qualityFor = hallCrowd; _qTime = 0; _fpsEma = 60; _lowFpsSecs = 0; crowdStepDownApplied = false;
+  }
+  if (crowdStepDownApplied) return;
+  _qTime += dt;
+  if (_qTime < 6) return; // 6 giây đầu: chờ scene ổn định
+  const fps = 1 / Math.max(dt, 1e-4);
+  _fpsEma += (fps - _fpsEma) * 0.05;
+  _lowFpsSecs = _fpsEma < 28 ? _lowFpsSecs + dt : 0;
+  if (_lowFpsSecs < 3) return;
+  crowdStepDownApplied = true;
+  if (isSoftwareRenderer()) {
+    console.info('[crowd] fps thấp do render bằng phần mềm (SwiftShader) — không áp hạ chất lượng 8.5 trong môi trường này.');
+    return;
+  }
+  setCrowdCount(70);
+  // 8.5: pixelRatio hạ về 1.25 — nhưng không bao giờ NÂNG lên nếu máy đang thấp hơn.
+  renderer.setPixelRatio(Math.min(renderer.getPixelRatio(), 1.25));
+  // 8.5: "tắt bloom" — bloom ở bản này là quầng sáng sprite cộng sáng (glow.js).
+  setGlowPulsesEnabled(false);
+  console.info('[crowd] Đã hạ chất lượng theo DESIGN 8.5: NPC còn 70, pixelRatio ≤ 1.25, tắt quầng sáng pulse.');
+}
+
+/** Trạng thái cơ chế hạ chất lượng 8.5 (dùng cho probe kiểm chứng). */
+export function getQualityStepDownState() {
+  return {
+    applied: crowdStepDownApplied,
+    crowdCount: hallCrowd ? (hallCrowd.activeCount ?? hallCrowd.figures.length) : null,
+    pixelRatio: renderer ? renderer.getPixelRatio() : null
+  };
+}
 function buildQuanAmPavilion() {
   const g = new THREE.Group();
   g.position.set(-28, 0, -8);
@@ -1341,12 +2235,14 @@ function buildQuanAmPavilion() {
 
   // 6 Cột
   const colMat = new THREE.MeshStandardMaterial({ color: 0x7c261e });
+  const qaCols = [];
   for (let i = 0; i < 6; i++) {
     const ang = (i / 6) * Math.PI * 2;
     const col = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.2, 3.8, 12), colMat);
     col.position.set(Math.cos(ang) * 2.4, 2.15, Math.sin(ang) * 2.4);
     col.castShadow = true;
     g.add(col);
+    qaCols.push(col);
   }
 
   // Mái đình
@@ -1397,6 +2293,8 @@ function buildQuanAmPavilion() {
   sign.position.set(0, 3.8, 2.2);
   g.add(sign);
 
+  // Chặng 7 (8.5): gộp 6 cột đình thành 1 mesh tĩnh.
+  mergeStaticMeshes(g, qaCols);
   scene.add(g);
 }
 
@@ -1418,11 +2316,13 @@ function buildBellTower() {
 
   // 4 Cột lớn
   const colMat = new THREE.MeshStandardMaterial({ color: 0x5c2b18 });
+  const bellCols = [];
   [[-1.8, -1.8], [1.8, -1.8], [-1.8, 1.8], [1.8, 1.8]].forEach(([cx, cz]) => {
     const col = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.25, 4.4, 12), colMat);
     col.position.set(cx, 2.45, cz);
     col.castShadow = true;
     g.add(col);
+    bellCols.push(col);
   });
 
   // Mái tháp chuông
@@ -1477,6 +2377,8 @@ function buildBellTower() {
   sign.position.set(0, 4.2, 2.3);
   g.add(sign);
 
+  // Chặng 7 (8.5): gộp 4 cột tháp thành 1 mesh tĩnh.
+  mergeStaticMeshes(g, bellCols);
   scene.add(g);
 }
 
@@ -1548,18 +2450,24 @@ function buildEnvironmentDecorations() {
     [-7.0, 2.2, -4.0], [7.0, 2.2, -4.0]
   ];
 
+  // Chặng 7 (8.5): material cột đèn dùng chung + danh sách gộp tĩnh môi trường.
+  const postMat = new THREE.MeshStandardMaterial({ color: 0x332219 });
+  const envMergeParts = [];
+  const envTreeGroups = [];
   lanternPositions.forEach(([lx, ly, lz]) => {
     const post = new THREE.Mesh(
       new THREE.CylinderGeometry(0.06, 0.07, ly, 8),
-      new THREE.MeshStandardMaterial({ color: 0x332219 })
+      postMat
     );
     post.position.set(lx, ly / 2, lz);
     scene.add(post);
+    envMergeParts.push(post);
 
     const lantern = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 12), lanternMat);
     lantern.scale.set(1, 1.25, 1);
     lantern.position.set(lx, ly + 0.15, lz);
     scene.add(lantern);
+    envMergeParts.push(lantern);
 
     // Quầng sáng giả bloom (additive sprite) tạo ảo giác phát sáng ấm.
     const halo = createGlowSprite(1.7, 0xffa64d, 0.62, true);
@@ -1602,9 +2510,15 @@ function buildEnvironmentDecorations() {
       frond.rotation.y = ang;
       frond.castShadow = true;
       tree.add(frond);
+      envMergeParts.push(frond);
     }
     scene.add(tree);
+    envTreeGroups.push(tree);
+    envMergeParts.push(trunk);
   });
+  // Chặng 7 (8.5): gộp trang trí tĩnh môi trường; nhóm cây đã rỗng, dọn bỏ.
+  mergeStaticMeshes(scene, envMergeParts);
+  envTreeGroups.forEach((t) => t.removeFromParent());
 }
 
 /* ========================================================
@@ -1789,6 +2703,18 @@ export function setJoystickMove(x, y) {
   }
 }
 
+// Chặng 6 (điểm 1): đặt camera ngay vào vị trí bám theo hiện tại — dùng đúng
+// công thức của vòng lặp animate để khung hình sau teleport không bị "nhảy".
+function snapCameraToFollowTarget() {
+  if (!camera || !player) return;
+  const cosPitch = Math.cos(camPitch);
+  const targetX = player.position.x + Math.sin(camYaw) * camDistance * cosPitch;
+  const targetY = player.position.y + 1.2 + Math.sin(camPitch) * camDistance;
+  const targetZ = player.position.z + Math.cos(camYaw) * camDistance * cosPitch;
+  camera.position.set(targetX, targetY, targetZ);
+  camera.lookAt(player.position.x, player.position.y + 1.1, player.position.z);
+}
+
 export function teleportTo(locKey) {
   const loc = LOCATIONS[locKey];
   if (!loc || !player) return;
@@ -1797,6 +2723,19 @@ export function teleportTo(locKey) {
   standUp();
   player.position.set(loc.x, 0, loc.z);
   groundPlayer(0, true);
+
+  if (locKey === 'mainHall') {
+    // Chặng 6 (điểm 1): khung hình mặc định riêng cho Chánh Điện — camera nằm
+    // trong lòng điện dưới mái, sau hàng người, nhìn dọc lối đi về ban thờ.
+    // camYaw=0.12: chéo nhẹ, tránh đối xứng hoàn toàn (DESIGN 8.1).
+    // camPitch=0.34 + camDistance=9.5: camera ở z local ≈ +11.9, y ≈ 5.0 —
+    // ngay ngoài mép nắp mái; tia nhìn tới người chơi/ban thờ lọt dưới mép
+    // nắp và mặt dốc mái nên không còn bị mái che như khung mặc định cũ.
+    camYaw = 0.12;
+    camPitch = 0.34;
+    camDistance = 9.5;
+    snapCameraToFollowTarget();
+  }
 }
 
 export function setChantingState(chanting) {
@@ -1827,6 +2766,8 @@ export function setNpcsVisible(visible) {
   onlineMonks.forEach((npc) => {
     if (npc) npc.visible = on;
   });
+  // Chặng 3: đám đông InstancedMesh của Chánh Điện
+  if (hallCrowd && hallCrowd.group) hallCrowd.group.visible = on;
 }
 
 export function onZoneChange(cb) {
@@ -1976,6 +2917,80 @@ export function spawnLantern(message) {
 }
 
 /* ========================================================
+   ĐÈN TRỜI BAY LÊN (Chặng 4 — thả từ Sheet Đèn nguyện)
+   Khác đèn hoa đăng trôi trên hồ: đèn giấy bay thẳng lên trời,
+   lắc nhẹ, mờ dần rồi tự huỷ (gỡ cả sprite khỏi glowPulses).
+   ======================================================== */
+const skyLanterns = [];
+
+export function releaseSkyLantern(message) {
+  if (!scene) return;
+  const group = new THREE.Group();
+  const base = player ? player.position : new THREE.Vector3(0, 0, 0);
+  group.position.set(base.x + 0.8, base.y + 1.1, base.z + (player ? -0.5 : 7.5));
+
+  const paperMat = new THREE.MeshStandardMaterial({ color: 0xffb45e, emissive: 0xff7a26, emissiveIntensity: 1.15, transparent: true, side: THREE.DoubleSide });
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.21, 0.36, 10, 1, true), paperMat);
+  group.add(body);
+
+  const cap = new THREE.Mesh(new THREE.CircleGeometry(0.16, 10), paperMat);
+  cap.rotation.x = -Math.PI / 2;
+  cap.position.y = 0.18;
+  group.add(cap);
+
+  const flame = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffe899 }));
+  flame.position.y = -0.05;
+  group.add(flame);
+
+  const glow = createGlowSprite(1.5, 0xffb45e, 0.75);
+  group.add(glow);
+
+  const light = new THREE.PointLight(0xff9933, 1.2, 6, 2);
+  light.position.y = 0;
+  group.add(light);
+
+  skyLanterns.push({ mesh: group, life: 0, swayPhase: Math.random() * Math.PI * 2, message, startX: group.position.x, startZ: group.position.z });
+  scene.add(group);
+}
+
+function updateSkyLanterns(time, dt) {
+  for (let i = skyLanterns.length - 1; i >= 0; i--) {
+    const l = skyLanterns[i];
+    l.life += dt;
+    const speed = 0.5 + Math.min(l.life * 0.02, 0.25);
+    l.mesh.position.y += speed * dt;
+    l.mesh.position.x = l.startX + Math.sin(time * 0.9 + l.swayPhase) * 0.12;
+    l.mesh.position.z = l.startZ + Math.cos(time * 0.7 + l.swayPhase) * 0.12;
+
+    if (l.life > 13) {
+      const fade = Math.max(0, 1 - (l.life - 13) / 2.5);
+      l.mesh.children.forEach(c => {
+        if (c.material && c.material.transparent) c.material.opacity = fade;
+        if (c.isSprite) c.material.opacity = 0.75 * fade;
+        if (c.isPointLight) c.intensity = 1.2 * fade;
+      });
+    }
+
+    if (l.life > 15.5 || l.mesh.position.y > 26) {
+      scene.remove(l.mesh);
+      l.mesh.traverse(c => {
+        if (c.isSprite) {
+          const idx = glowPulses.findIndex(g => g.sprite === c);
+          if (idx >= 0) glowPulses.splice(idx, 1);
+        }
+        if (c.geometry) c.geometry.dispose();
+        if (c.material) c.material.dispose();
+      });
+      skyLanterns.splice(i, 1);
+    }
+  }
+}
+
+export function getSkyLanternStats() {
+  return { active: skyLanterns.length };
+}
+
+/* ========================================================
    CẬP NHẬT GAME LOOP MỖI FRAME
    ======================================================== */
 function updateGame(dt) {
@@ -2083,6 +3098,12 @@ function updateGame(dt) {
   updateGlowPulses(clock.getElapsedTime());
   updatePondEffects(clock.getElapsedTime());
 
+  // Chặng 3: đám đông Chánh Điện — nhịp thở, sóng cúi lạy, pill tên, vòng sáng.
+  updateHallCrowd(clock.getElapsedTime(), dt);
+  updateCrowdPills();
+  updatePlayerMarkers(clock.getElapsedTime());
+  monitorCrowdQuality(dt);
+
   // Cập nhật đèn nguyện trôi trên hồ sen
   lanternsInPond.forEach((item) => {
     item.life += dt;
@@ -2091,6 +3112,9 @@ function updateGame(dt) {
     // Nhấp nhô nhẹ trên sóng nước
     item.mesh.position.y = 0.09 + Math.sin(item.life * 2.0) * 0.015;
   });
+
+  // Chặng 4: đèn trời bay lên từ Sheet Đèn nguyện
+  updateSkyLanterns(clock.getElapsedTime(), dt);
 
   // Kiểm tra khu vực chú tiểu đang đứng
   checkPlayerZone();

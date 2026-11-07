@@ -1,6 +1,9 @@
 import { SUTRAS, SUTRA_BY_ID, levelOf, syllables } from './kinh.js';
-import { initScene, setPlayerAvatar, meditateNearest, createCharacterPreview, setAura, teleportTo, setJoystickMove, spawnLantern, LOCATIONS, onZoneChange, setNpcsVisible, captureScene, getMinimapScene, getMinimapFrame } from './scene.js';
+import { initScene, setPlayerAvatar, meditateNearest, createCharacterPreview, setAura, setChantingState, teleportTo, setJoystickMove, spawnLantern, releaseSkyLantern, getSkyLanternStats, LOCATIONS, onZoneChange, setNpcsVisible, captureScene, getMinimapScene, getMinimapFrame } from './scene.js';
 import { initMinimap, setMinimapScene, setMinimapEnabled, drawMinimap } from './minimap.js';
+// Đặt tên riêng: app.js đã có openSheet()/closeSheet() cho sheet Cài đặt (el.sheet)
+import { openSheet as openBottomSheet, closeSheet as closeBottomSheet, initSheet } from './sheets.js';
+import { SAMPLE_WISHES, CHAT_MESSAGES } from './mock-data.js';
 import * as Audio from './audio.js';
 import * as Store from './storage.js';
 
@@ -1297,7 +1300,8 @@ function bindUI() {
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
       closePreview();
-      el.lanternModal?.classList.add('hidden');
+      closeBottomSheet(el.lanternModal);
+      closeBottomSheet($('chatSheet'));
       el.prayerSection?.classList.add('hidden');
       el.questModal?.classList.add('hidden');
       el.howToPlayModal?.classList.add('hidden');
@@ -1379,7 +1383,7 @@ function bindUI() {
 
   // Nút Đèn nguyện
   el.btnOpenLantern?.addEventListener('click', openLanternModal);
-  el.btnCloseLantern?.addEventListener('click', () => el.lanternModal?.classList.add('hidden'));
+  el.btnCloseLantern?.addEventListener('click', () => closeBottomSheet(el.lanternModal));
   el.btnSendWish?.addEventListener('click', submitWish);
   el.txtWishInput?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') submitWish();
@@ -1820,7 +1824,8 @@ function handleZoneAction() {
 
 function openLanternModal() {
   renderWishList();
-  el.lanternModal?.classList.remove('hidden');
+  renderSampleWishes();
+  openBottomSheet(el.lanternModal);
 }
 
 function renderWishList() {
@@ -1877,8 +1882,10 @@ function submitWish() {
   state.data.wishes.unshift(newWish);
   Store.save(state.data);
 
-  // Thả đèn hoa đăng nổi trên mặt nước 3D hồ sen
-  spawnLantern(text);
+  // Chặng 4 (Prompt 4): đóng sheet và thả một chiếc đèn bay LÊN trong scene.
+  // Đèn hoa đăng trên hồ sen (spawnLantern) vẫn được dựng lại từ lời nguyện đã lưu khi mở app.
+  releaseSkyLantern(text);
+  closeBottomSheet(el.lanternModal);
 
   // Hiệu ứng công đức & âm thanh
   addMerit(15);
@@ -2283,7 +2290,7 @@ if (document.readyState === 'loading') {
     yard: () => document.querySelector('.nav-chip[data-loc="entrance"]')?.click(),
     meditate: () => byId('btnMeditate')?.click(),
     lephat: () => document.querySelector('[data-devotion="pray"]')?.click(),
-    kinh: () => document.querySelector('[data-devotion="sutra"]')?.click(),
+    kinh: () => openKinhScreen(),
     profile: () => byId('btnCharacter')?.click(),
   };
   nav?.querySelectorAll('button[data-nav]').forEach((btn) => {
@@ -2299,4 +2306,430 @@ if (document.readyState === 'loading') {
   sheet?.addEventListener('click', (e) => {
     if (e.target === sheet) sheet.classList.add('hidden');
   });
+})();
+
+// ===== STAGE 4: Đèn nguyện cộng đồng + Chat rút gọn (DESIGN.md mục 7.3, 7.4) =====
+const likedWishes = new Set();
+
+function renderSampleWishes() {
+  const list = document.getElementById('sampleWishList');
+  if (!list) return;
+
+  list.textContent = '';
+
+  SAMPLE_WISHES.forEach((wish) => {
+    const item = document.createElement('div');
+    item.className = 'wish-item';
+
+    const author = document.createElement('div');
+    author.className = 'wish-author';
+
+    const name = document.createElement('span');
+    name.className = 'author-name';
+    name.textContent = wish.name;
+
+    const time = document.createElement('span');
+    time.className = 'wish-time';
+    time.textContent = wish.time;
+
+    author.appendChild(name);
+    author.appendChild(time);
+
+    const text = document.createElement('div');
+    text.className = 'wish-text';
+    text.textContent = wish.text;
+
+    const footer = document.createElement('div');
+    footer.className = 'wish-footer';
+
+    const spacer = document.createElement('span');
+
+    const likeBtn = document.createElement('button');
+    likeBtn.type = 'button';
+    likeBtn.className = 'wish-likes';
+    likeBtn.setAttribute('aria-pressed', 'false');
+    likeBtn.setAttribute('aria-label', `Đồng cảm với điều nguyện của ${wish.name}`);
+    likeBtn.textContent = `♡ ${wish.hearts}`;
+
+    let displayCount = wish.hearts;
+    likeBtn.addEventListener('click', () => {
+      const liked = likedWishes.has(wish.id);
+      if (liked) {
+        likedWishes.delete(wish.id);
+        displayCount -= 1;
+        likeBtn.textContent = `♡ ${displayCount}`;
+        likeBtn.classList.remove('liked');
+        likeBtn.setAttribute('aria-pressed', 'false');
+      } else {
+        likedWishes.add(wish.id);
+        displayCount += 1;
+        likeBtn.textContent = `♥ ${displayCount}`;
+        likeBtn.classList.add('liked');
+        likeBtn.setAttribute('aria-pressed', 'true');
+      }
+    });
+
+    footer.appendChild(spacer);
+    footer.appendChild(likeBtn);
+
+    item.appendChild(author);
+    item.appendChild(text);
+    item.appendChild(footer);
+
+    list.appendChild(item);
+  });
+}
+
+/* ===== Trò chuyện cộng đồng ===== */
+
+const chatState = { messages: [...CHAT_MESSAGES] };
+
+function chatLineText(m) {
+  const span = document.createElement('span');
+  const nameSpan = document.createElement('span');
+  nameSpan.className = 'chat-line-name';
+  nameSpan.textContent = `${m.name}: `;
+  span.appendChild(nameSpan);
+  span.appendChild(document.createTextNode(m.text));
+  return span;
+}
+
+function renderChatLine() {
+  const items = document.querySelectorAll('#chatLine .chat-line-item');
+  const recent = chatState.messages.slice(-2).reverse(); // mới nhất đứng đầu
+  items.forEach((el, index) => {
+    while (el.firstChild) el.removeChild(el.firstChild);
+    const message = recent[index];
+    if (message) el.appendChild(chatLineText(message));
+  });
+}
+
+function renderChatList() {
+  const list = document.getElementById('chatList');
+  if (!list) return;
+  while (list.firstChild) list.removeChild(list.firstChild);
+  chatState.messages.forEach((message) => {
+    const row = document.createElement('div');
+    row.className = 'chat-msg';
+
+    const name = document.createElement('span');
+    name.className = 'chat-name';
+    name.textContent = message.name;
+
+    const time = document.createElement('span');
+    time.className = 'chat-time';
+    time.textContent = message.time;
+
+    row.appendChild(name);
+    row.appendChild(document.createTextNode(message.text));
+    row.appendChild(time);
+    list.appendChild(row);
+  });
+  list.scrollTop = list.scrollHeight;
+}
+
+function sendChat() {
+  const input = document.getElementById('inpChatText');
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+
+  const playerName =
+    (typeof state !== 'undefined' && state.data && state.data.playerName) || 'Quảng Hạnh 55';
+
+  chatState.messages.push({ name: playerName, text, time: 'Vừa xong' });
+  input.value = '';
+  renderChatList();
+  renderChatLine();
+  input.focus();
+}
+
+function initChat() {
+  const sheet = document.getElementById('chatSheet');
+  const line = document.getElementById('chatLine');
+  const sendBtn = document.getElementById('btnSendChat');
+  const input = document.getElementById('inpChatText');
+
+  if (sheet) initSheet(sheet);
+  if (line && sheet) line.addEventListener('click', () => openBottomSheet(sheet));
+  if (sendBtn) sendBtn.addEventListener('click', sendChat);
+  if (input) {
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        sendChat();
+      }
+    });
+  }
+
+  renderChatLine();
+  renderChatList();
+}
+
+// Gắn hành vi BottomSheet dùng chung + khởi tạo chat (module deferred: DOM đã sẵn)
+(() => {
+  initSheet(el.lanternModal);
+  renderSampleWishes();
+  initChat();
+})();
+
+// ===== STAGE 5: Màn Tụng Kinh + player bottom sheet (DESIGN.md mục 3, 5, 7) =====
+// Tái sử dụng bộ máy tụng hiện hữu (selectSutra/startAuto/stopAuto) và
+// setChantingState của scene.js — không tạo hệ tụng song song.
+const KINH_CATALOG = [
+  { id: 'dai-bi', duration: '05:30', chanters: 1284 },
+  { id: 'a-di-da', duration: '02:30', chanters: 867 },
+  { id: 'pho-mon', duration: '02:40', chanters: 942 },
+  { id: 'bat-nha', duration: '03:00', chanters: 1156 }
+];
+
+const kinhPlayer = {
+  playing: false,
+  elapsedBefore: 0,
+  startedAt: 0,
+  tick: null,
+  lastIndex: -1,
+  lastFinished: false
+};
+
+function fmtKinhTime(totalSeconds) {
+  const sec = Math.max(0, Math.floor(totalSeconds || 0));
+  const minutes = Math.floor(sec / 60);
+  const seconds = sec % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function kinhElapsedSeconds() {
+  return kinhPlayer.elapsedBefore + (kinhPlayer.playing && kinhPlayer.startedAt
+    ? (Date.now() - kinhPlayer.startedAt) / 1000
+    : 0);
+}
+
+function renderKinhList() {
+  const list = document.getElementById('kinhList');
+  if (!list) return;
+  list.textContent = '';
+
+  KINH_CATALOG.forEach((entry) => {
+    const sutra = SUTRA_BY_ID[entry.id];
+    if (!sutra) return;
+
+    const card = document.createElement('article');
+    card.className = 'kinh-card';
+    card.tabIndex = 0;
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', `Mở máy tụng ${sutra.name}`);
+
+    const main = document.createElement('div');
+    main.className = 'kinh-card-main';
+
+    const title = document.createElement('h3');
+    title.textContent = sutra.name;
+
+    const sub = document.createElement('p');
+    sub.className = 'kinh-card-sub';
+    sub.textContent = sutra.subtitle;
+
+    const meta = document.createElement('div');
+    meta.className = 'kinh-card-meta';
+
+    const duration = document.createElement('span');
+    duration.textContent = `⏱ ${entry.duration}`;
+
+    const chanters = document.createElement('span');
+    chanters.textContent = `👥 ${fmt(entry.chanters)} người đang tụng`;
+
+    meta.append(duration, chanters);
+    main.append(title, sub, meta);
+
+    const action = document.createElement('button');
+    action.type = 'button';
+    action.className = 'kinh-card-action' + (state.sutra.id === entry.id ? ' active' : '');
+    action.textContent = 'Tụng';
+    action.setAttribute('aria-label', `Tụng ${sutra.name}`);
+    action.addEventListener('click', (event) => {
+      event.stopPropagation();
+      openKinhPlayer(entry.id);
+    });
+
+    card.append(main, action);
+    card.addEventListener('click', () => openKinhPlayer(entry.id));
+    card.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        openKinhPlayer(entry.id);
+      }
+    });
+
+    list.appendChild(card);
+  });
+}
+
+function openKinhScreen() {
+  const screen = document.getElementById('kinhScreen');
+  if (!screen) return;
+  el.prayerSection?.classList.add('hidden');
+  el.btnTogglePrayer?.classList.remove('highlight');
+  renderKinhList();
+  screen.classList.remove('hidden');
+  screen.scrollTop = 0;
+}
+
+function closeKinhScreen() {
+  document.getElementById('kinhScreen')?.classList.add('hidden');
+}
+
+function renderKinhPlayerText() {
+  const box = document.getElementById('kinhPlayerText');
+  const title = document.getElementById('kinhPlayerTitle');
+  const sub = document.getElementById('kinhPlayerSub');
+  if (!box || !state.sutra) return;
+
+  if (title) title.textContent = state.sutra.name;
+  if (sub) sub.textContent = state.sutra.intro || state.sutra.subtitle || '';
+
+  box.textContent = '';
+  state.sutra.lines.forEach((line, idx) => {
+    const p = document.createElement('p');
+    p.className = 'kinh-line' + (!state.finished && idx === state.index ? ' now' : '');
+    p.textContent = line;
+    box.appendChild(p);
+  });
+
+  if (state.finished) {
+    const done = document.createElement('p');
+    done.className = 'kinh-line now';
+    done.textContent = 'A Di Đà Phật · Hồi hướng công đức';
+    box.appendChild(done);
+  }
+
+  kinhPlayer.lastIndex = state.index;
+  kinhPlayer.lastFinished = state.finished;
+
+  requestAnimationFrame(() => {
+    const active = box.querySelector('.kinh-line.now');
+    if (active) {
+      box.scrollTo({
+        top: Math.max(0, active.offsetTop - box.clientHeight / 2 + active.clientHeight / 2),
+        behavior: 'smooth'
+      });
+    }
+  });
+}
+
+function syncKinhPlayer() {
+  const timer = document.getElementById('kinhTimer');
+  if (timer) {
+    timer.textContent = `⏱ ${fmtKinhTime(kinhElapsedSeconds())}`;
+    timer.classList.toggle('highlight', kinhPlayer.playing);
+  }
+
+  const sheet = document.getElementById('kinhPlayerSheet');
+  if (!sheet || sheet.classList.contains('hidden')) return;
+  if (kinhPlayer.lastIndex !== state.index || kinhPlayer.lastFinished !== state.finished) {
+    renderKinhPlayerText();
+  }
+}
+
+function updateKinhPlayButton() {
+  const btn = document.getElementById('btnKinhPlay');
+  if (!btn) return;
+  btn.textContent = kinhPlayer.playing ? '⏸' : '▶';
+  btn.setAttribute('aria-pressed', String(kinhPlayer.playing));
+}
+
+function stopKinhTicker(keepElapsed = true) {
+  if (kinhPlayer.tick) clearInterval(kinhPlayer.tick);
+  kinhPlayer.tick = null;
+  if (keepElapsed && kinhPlayer.startedAt) {
+    kinhPlayer.elapsedBefore += (Date.now() - kinhPlayer.startedAt) / 1000;
+  }
+  kinhPlayer.startedAt = 0;
+  syncKinhPlayer();
+}
+
+function startKinhTicker() {
+  stopKinhTicker(false);
+  kinhPlayer.startedAt = Date.now();
+  kinhPlayer.tick = setInterval(syncKinhPlayer, 250);
+  syncKinhPlayer();
+}
+
+function pauseKinh() {
+  const wasPlaying = kinhPlayer.playing || state.auto;
+  if (state.auto) stopAuto();
+  kinhPlayer.playing = false;
+  try { setChantingState(false); } catch (e) { /* scene chưa sẵn sàng */ }
+  stopKinhTicker(true);
+  updateKinhPlayButton();
+  return wasPlaying;
+}
+
+function toggleKinhPlay() {
+  if (kinhPlayer.playing || state.auto) {
+    pauseKinh();
+    return;
+  }
+
+  if (state.finished) {
+    state.finished = false;
+    state.index = 0;
+    kinhPlayer.elapsedBefore = 0;
+    renderLines();
+    renderProgress();
+  }
+
+  startAuto();
+  kinhPlayer.playing = true;
+  try { setChantingState(true); } catch (e) { /* scene chưa sẵn sàng */ }
+  startKinhTicker();
+  updateKinhPlayButton();
+  renderKinhPlayerText();
+}
+
+function openKinhPlayer(id) {
+  const sheet = document.getElementById('kinhPlayerSheet');
+  if (!sheet || !SUTRA_BY_ID[id]) return;
+
+  if (kinhPlayer.playing || state.auto) pauseKinh();
+  if (state.sutra.id !== id || state.finished) selectSutra(id, true);
+
+  kinhPlayer.elapsedBefore = 0;
+  kinhPlayer.startedAt = 0;
+  kinhPlayer.lastIndex = -1;
+  updateKinhPlayButton();
+  renderKinhPlayerText();
+  syncKinhPlayer();
+  initSheet(sheet);
+  openBottomSheet(sheet);
+}
+
+(() => {
+  const sheet = document.getElementById('kinhPlayerSheet');
+  const playBtn = document.getElementById('btnKinhPlay');
+  if (sheet) initSheet(sheet);
+  playBtn?.addEventListener('click', toggleKinhPlay);
+
+  sheet?.addEventListener('click', (event) => {
+    if (event.target === sheet || event.target.closest?.('[data-sheet-close]')) {
+      pauseKinh();
+    }
+  });
+
+  document.querySelectorAll('#bottomNav button[data-nav]').forEach((btn) => {
+    if (btn.dataset.nav !== 'kinh') {
+      btn.addEventListener('click', closeKinhScreen);
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeKinhScreen();
+      if (sheet && !sheet.classList.contains('hidden')) pauseKinh();
+    }
+  });
+
+  renderKinhList();
+  updateKinhPlayButton();
+  syncKinhPlayer();
 })();

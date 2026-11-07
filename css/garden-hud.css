@@ -652,3 +652,28 @@ a:focus-visible {
 #inpWishText {
     background: #1D0F08;
 }
+
+/* Chặng 6 (điểm 2) — Mobile ≤600px: thẻ vùng thu về một hàng, không đè
+   dock hành động bên phải; ẩn nhãn minimap (đã trùng tên vùng trên thẻ). */
+@media (max-width: 600px) {
+    /* Giới hạn bề rộng để không chạm dock ở mép phải (đo thực tế: dock bắt
+       đầu ở x=230 trên màn 390px — chừa thêm khoảng hở 6px) */
+    #zonePrompt { max-width: calc(100vw - 176px); }
+
+    /* Ẩn dòng mô tả — thẻ chỉ còn icon + tiêu đề + nút, đúng một hàng */
+    #zonePrompt #promptDesc { display: none; }
+
+    /* Giảm padding, ép một hàng, không cho xuống dòng */
+    #zonePrompt .prompt-content { padding: 6px 12px; flex-wrap: nowrap; box-sizing: border-box; }
+
+    /* Icon và nút giữ nguyên kích thước */
+    #zonePrompt .prompt-icon { flex: 0 0 auto; }
+    #zonePrompt .prompt-btn { flex: 0 0 auto; white-space: nowrap; }
+
+    /* Tiêu đề co giãn, dài quá thì cắt bằng dấu ba chấm */
+    #zonePrompt .prompt-info { flex: 1 1 auto; min-width: 0; }
+    #zonePrompt #promptTitle { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* Nhãn minimap trùng tên vùng với thẻ — ẩn trên mobile */
+    #minimapLabel { display: none; }
+}

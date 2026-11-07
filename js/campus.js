@@ -1,5 +1,6 @@
 import * as THREE from './three.module.js';
 import { createGlowSprite } from './glow.js';
+import { mergeStaticMeshes, mergeGeometriesNonIndexed, extractGeometrySlice } from './static-merge.js';
 
 export const CAMPUS_BOUNDS = { x: 38, minZ: -46, maxZ: 38 };
 export const SEAT_LAYOUT = [];
@@ -137,6 +138,9 @@ export function buildCampus(scene, registerWalkable = mesh => { mesh.userData.is
         emissiveIntensity: 1.7,
         roughness: .3
     });
+    // Chặng 7 (8.5): ứng viên gộp mesh tĩnh — chỉ mesh trang trí KHÔNG registerWalkable,
+    // hình học bake nguyên vẹn nên hình ảnh không đổi, chỉ giảm draw call.
+    const mergeParts = [];
     function box(w, h, d, material, x, y, z) {
         const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
         m.position.set(x, y, z); m.receiveShadow = true; group.add(m); return m;
@@ -147,8 +151,8 @@ export function buildCampus(scene, registerWalkable = mesh => { mesh.userData.is
     registerWalkable(box(5, .14, 39.5, border, 0, .015, -21.75));
     registerWalkable(box(5, .14, 24.5, border, 0, .015, 19.25));
     // Mạch lát ngang, chừa trục hành lễ giữa sân.
-    for (let z = -34; z <= -5; z += 3) box(38, .015, .045, border, 0, .08, z);
-    for (let x = -18; x <= 18; x += 3) box(.035, .015, 31, border, x, .08, -20);
+    for (let z = -34; z <= -5; z += 3) { const m = box(38, .015, .045, border, 0, .08, z); mergeParts.push(m); }
+    for (let x = -18; x <= 18; x += 3) { const m = box(.035, .015, 31, border, x, .08, -20); mergeParts.push(m); }
     for (const side of [-1, 1]) {
         registerWalkable(box(3.6, .14, 65, stone, side * 19.8, .015, -5));
         registerWalkable(box(19, .14, 3.4, stone, side * 25, .015, 9));
@@ -157,36 +161,37 @@ export function buildCampus(scene, registerWalkable = mesh => { mesh.userData.is
         // Hành lang có mái, cột gỗ, ghế dài bên sân.
         registerWalkable(box(3.8, .18, 31, border, side * 21.5, .12, -22));
         for (let z = -36; z <= -8; z += 4) {
-            box(.22, 3.6, .22, wood, side * 20.1, 1.95, z);
-            box(.22, 3.6, .22, wood, side * 22.9, 1.95, z);
-            box(1.1, .2, 2.3, wood, side * 22.1, .65, z + 1.4);
+            mergeParts.push(box(.22, 3.6, .22, wood, side * 20.1, 1.95, z));
+            mergeParts.push(box(.22, 3.6, .22, wood, side * 22.9, 1.95, z));
+            mergeParts.push(box(1.1, .2, 2.3, wood, side * 22.1, .65, z + 1.4));
         }
         const canopy = box(4.6, .35, 32, roof, side * 21.5, 3.9, -22);
         canopy.rotation.z = side * .07;
+        mergeParts.push(canopy);
     }
     // Tường khuôn viên và tam quan ở phía nam.
-    box(80, 1.25, .45, border, 0, .62, -48);
+    mergeParts.push(box(80, 1.25, .45, border, 0, .62, -48));
     for (const side of [-1, 1]) {
-        box(.45, 1.25, 86, border, side * 40, .62, -5);
-        box(32, 1.25, .45, border, side * 24, .62, 38);
-        box(.8, 5, .8, wood, side * 4, 2.5, 32);
+        mergeParts.push(box(.45, 1.25, 86, border, side * 40, .62, -5));
+        mergeParts.push(box(32, 1.25, .45, border, side * 24, .62, 38));
+        mergeParts.push(box(.8, 5, .8, wood, side * 4, 2.5, 32));
     }
-    box(11, .5, 3.6, roof, 0, 5, 32);
-    box(8.4, .35, 3, roof, 0, 5.9, 32);
-    box(7.8, .65, .35, wood, 0, 4.4, 32);
+    mergeParts.push(box(11, .5, 3.6, roof, 0, 5, 32));
+    mergeParts.push(box(8.4, .35, 3, roof, 0, 5.9, 32));
+    mergeParts.push(box(7.8, .65, .35, wood, 0, 4.4, 32));
     // Cây, đèn lồng và bồn hoa dọc khuôn viên, không chắn lối giữa sân.
     for (const side of [-1, 1]) {
         for (let z = -40; z <= 30; z += 7) {
             const x = side * 35;
-            box(.45, 2.7, .45, wood, x, 1.35, z);
+            mergeParts.push(box(.45, 2.7, .45, wood, x, 1.35, z));
             const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(2.1, 1), leaves);
-            crown.position.set(x, 3.6, z); crown.scale.y = 1.25; group.add(crown);
-            box(.12, 2.6, .12, wood, side * 18, 1.3, z);
+            crown.position.set(x, 3.6, z); crown.scale.y = 1.25; group.add(crown); mergeParts.push(crown);
+            mergeParts.push(box(.12, 2.6, .12, wood, side * 18, 1.3, z));
             const lantern = new THREE.Mesh(new THREE.SphereGeometry(.32, 10, 8), glow);
-            lantern.scale.y = 1.4; lantern.position.set(side * 18, 2.7, z); group.add(lantern);
+            lantern.scale.y = 1.4; lantern.position.set(side * 18, 2.7, z); group.add(lantern); mergeParts.push(lantern);
             // Chụp đèn giấy phát sáng quanh bóng đèn lồng
             const shade = new THREE.Mesh(new THREE.CylinderGeometry(.30, .24, .62, 10, 1, true), glow);
-            shade.position.set(side * 18, 2.7, z); group.add(shade);
+            shade.position.set(side * 18, 2.7, z); group.add(shade); mergeParts.push(shade);
             // Quầng sáng mềm quanh đèn (giả bloom)
             const halo = createGlowSprite(2.0, 0xffb45e, 0.55, true);
             halo.position.set(side * 18, 2.7, z); group.add(halo);
@@ -202,14 +207,14 @@ export function buildCampus(scene, registerWalkable = mesh => { mesh.userData.is
         trunk.position.set(x, height / 2, z);
         trunk.rotation.z = (Math.random() - .5) * .07;
         trunk.castShadow = true;
-        group.add(trunk);
+        group.add(trunk); mergeParts.push(trunk);
         for (let f = 0; f < 7; f++) {
             const ang = (f / 7) * Math.PI * 2;
             const frond = new THREE.Mesh(frondGeo, palmLeafMat);
             frond.position.set(x + Math.cos(ang) * 1.2, height - .05, z + Math.sin(ang) * 1.2);
             frond.rotation.set(Math.PI / 2 - .6, Math.PI / 2 - ang, 0);
             frond.scale.set(1, 1, .38);
-            group.add(frond);
+            group.add(frond); mergeParts.push(frond);
         }
     }
     for (const [px, pz, ph] of [
@@ -219,9 +224,9 @@ export function buildCampus(scene, registerWalkable = mesh => { mesh.userData.is
     // Hai vòng tiểu cảnh quanh vườn thiền.
     for (const side of [-1, 1]) {
         const rim = new THREE.Mesh(new THREE.TorusGeometry(4.5, .16, 8, 40), border);
-        rim.rotation.x = Math.PI / 2; rim.position.set(side * 26, .2, 26); group.add(rim);
+        rim.rotation.x = Math.PI / 2; rim.position.set(side * 26, .2, 26); group.add(rim); mergeParts.push(rim);
         const rock = new THREE.Mesh(new THREE.IcosahedronGeometry(1.3, 0), stone);
-        rock.scale.set(1.7, 1, 1); rock.position.set(side * 26, .7, 26); group.add(rock);
+        rock.scale.set(1.7, 1, 1); rock.position.set(side * 26, .7, 26); group.add(rock); mergeParts.push(rock);
     }
     // Đệm cói dệt: mặt trên viền vàng + hoa sen, thân đệm đan sợi.
     const seatSideMat = new THREE.MeshStandardMaterial({
@@ -245,14 +250,47 @@ export function buildCampus(scene, registerWalkable = mesh => { mesh.userData.is
     const trimGeo = new THREE.TorusGeometry(.59, .035, 6, 20);
     // Cylinder nhận mảng material theo thứ tự: mặt bên, mặt trên, mặt dưới.
     const seatMaterials = [seatSideMat, seatTopMat, seatSideMat];
+    // Chặng 7 (8.5): đệm gốc chỉ còn là MỎ NEO vô hình cho raycast/vị trí ngồi;
+    // hình ảnh đệm do 3 mesh gộp đảm nhiệm (bên+đáy / mặt trên / viền) — bake từ
+    // đúng slice hình học gốc nên hình ảnh giữ nguyên, ~480 draw call còn 3.
+    // Tách đệm theo 3 group của CylinderGeometry: 0 = mặt bên, 1 = mặt trên, 2 = mặt đáy.
+    const seatGroups = seatGeo.groups;
+    const sideSlice = extractGeometrySlice(seatGeo, seatGroups[0].start, seatGroups[0].count);
+    const topSlice = extractGeometrySlice(seatGeo, seatGroups[1].start, seatGroups[1].count);
+    const bottomSlice = extractGeometrySlice(seatGeo, seatGroups[2].start, seatGroups[2].count);
+    // Torus có index -> chuyển non-indexed để gộp, hình ảnh không đổi.
+    const trimSlice = trimGeo.index ? trimGeo.toNonIndexed() : trimGeo.clone();
+    const geosSide = [], geosTop = [], geosTrim = [];
+    const seatMatrix = new THREE.Matrix4();
+    const trimQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0));
+    const oneScale = new THREE.Vector3(1, 1, 1);
+    const trimPos = new THREE.Vector3();
     const seats = SEAT_LAYOUT.map((position, index) => {
+        // Mỏ neo vô hình: giữ vị trí + seatIndex cho raycast, không thêm vào group.
         const seat = new THREE.Mesh(seatGeo, seatMaterials);
         seat.position.set(position.x, .18, position.z);
-        seat.userData.seatIndex = index; seat.receiveShadow = true; group.add(seat);
-        const seam = new THREE.Mesh(trimGeo, trimMat);
-        seam.rotation.x = Math.PI / 2; seam.position.set(position.x, .276, position.z); group.add(seam);
+        seat.userData.seatIndex = index; seat.receiveShadow = true;
+        seat.updateMatrixWorld(true);
+        // Bake đệm vào các mảng geometry gộp.
+        seatMatrix.makeTranslation(position.x, .18, position.z);
+        geosSide.push(sideSlice.clone().applyMatrix4(seatMatrix));
+        geosSide.push(bottomSlice.clone().applyMatrix4(seatMatrix));
+        geosTop.push(topSlice.clone().applyMatrix4(seatMatrix));
+        // Viền torus: tịnh tiến (x, .276, z) + xoay x = PI/2 như seam gốc.
+        trimPos.set(position.x, .276, position.z);
+        seatMatrix.compose(trimPos, trimQuat, oneScale);
+        geosTrim.push(trimSlice.clone().applyMatrix4(seatMatrix));
         return seat;
     });
+    // 3 mesh gộp thay cho 120 đệm × (thân + viền).
+    const meshSide = new THREE.Mesh(mergeGeometriesNonIndexed(geosSide).geometry, seatSideMat);
+    meshSide.receiveShadow = true; meshSide.castShadow = false; group.add(meshSide);
+    const meshTop = new THREE.Mesh(mergeGeometriesNonIndexed(geosTop).geometry, seatTopMat);
+    meshTop.receiveShadow = true; meshTop.castShadow = false; group.add(meshTop);
+    const meshTrim = new THREE.Mesh(mergeGeometriesNonIndexed(geosTrim).geometry, trimMat);
+    meshTrim.castShadow = false; group.add(meshTrim);
+    // Chặng 7 (8.5): gộp toàn bộ mesh tĩnh trang trí đã gom vào mergeParts.
+    mergeStaticMeshes(group, mergeParts);
     scene.add(group);
     return seats;
 }
